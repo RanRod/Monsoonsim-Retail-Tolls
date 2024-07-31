@@ -477,4 +477,4 @@ with st.sidebar:
     try:
         st.json(st.session_state.store_location[rental_location])
     except KeyError:
-        st.error(body="Fill: Retail Information First")
+        st.error(body="Apply Retail Information First")
