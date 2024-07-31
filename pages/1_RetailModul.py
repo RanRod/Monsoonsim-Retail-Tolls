@@ -196,6 +196,7 @@ with tab1:
                     else:
                         st.error(body=f"{total_area_percentage}%")
 
+
 with tab2:
     with st.expander(label="Before-And-After (Analysis)"):
         if (
@@ -241,6 +242,9 @@ with tab2:
                     st.warning(
                         "Cannot calculate percentage change when 'Before' value is zero."
                     )
+        else:
+            st.warning("Please select a valid rental location first.")
+
     with st.expander(label="Return Of Investment (ROI)"):
         with st.form(key="roi_marketing"):
             if (
