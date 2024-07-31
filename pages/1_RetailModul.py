@@ -241,8 +241,6 @@ with tab2:
                     st.warning(
                         "Cannot calculate percentage change when 'Before' value is zero."
                     )
-        else:
-            st.warning("Please select a valid rental location first.")
     with st.expander(label="Return Of Investment (ROI)"):
         with st.form(key="roi_marketing"):
             if (
@@ -477,4 +475,4 @@ with st.sidebar:
     try:
         st.json(st.session_state.store_location[rental_location])
     except KeyError:
-        st.error(body="Fill: Retail Information First")
+        st.error(body="Apply Retail Information First")
