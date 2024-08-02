@@ -2,13 +2,13 @@ import streamlit as st
 
 # Page configuration
 st.set_page_config(
-    page_title="Monsoonsim - Retail Module Tools",
+    page_title="MonsoonSIM - Retail Module Tools",
     page_icon="🏪",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for an improved dark theme
+# Custom CSS
 st.markdown(
     """
     <style>
@@ -92,7 +92,7 @@ st.markdown(
 
 # Main content
 st.markdown(
-    "<h1 class='main-header'>MonsoonSIM Retail Module Tools</h1>",
+    "<h1 class='main-header'>MonsoonSIM - Retail Module Tools</h1>",
     unsafe_allow_html=True,
 )
 
@@ -137,25 +137,34 @@ st.markdown(
 with st.expander("Advanced Features"):
     st.markdown(
         """
-        1. **Multi-Location Management**: 
-           - Manage multiple store locations
-           - Customize product lists and customer segments
+    1. Multi-Location Management:
+        - Manage multiple retail locations
+        - Input location-specific details like rental size, rental cost, and overflow fee
+        - Customize product lists and customer segments for each location
+    
+    2. **Retail Information Tracking**:
+        - Record store rental size, rental costs, and overflow fees
+        - Track product details like costs, selling prices, dimensions, and expiration dates
+        - Store and retrieve location-specific information using session state
 
-        2. **Store Information Tracking**:
-           - Record store area, rental costs, and overflow fees
-           - Track product details like costs, selling prices, dimensions, and expiration dates
+    3. **Capacity Planning**:
+        - Optimize store space usage by calculating total area percentage occupied by products
+        - Provide feedback on whether the selected product quantities exceed the available rental size
+        - Plan restocking by calculating the percentage of space required for restocking
 
-        3. **Capacity Planning**:
-           - Optimize store space usage
-           - Visualize capacity utilization
+    4. **Marketing Evaluation**:
+        - Perform before-and-after analysis to evaluate the impact of marketing campaigns
+        - Calculate the percentage change in key variables like number of sales and revenue
+        - Determine the Return on Investment (ROI) for marketing campaigns
 
-        4. **Pricing Strategies**:
-           - Break-Even Price Calculator
-           - Initial Selling Price Analysis
+    5. **Pricing Strategies**:
+        - Calculate the break-even price per unit considering rental costs, marketing costs, and product costs
+        - Analyze the initial selling price and determine profitability based on total revenue and total cost
 
-        5. **Marketing Evaluation**:
-           - Compare strategies across locations
-        """
+    6. **Session State Management**:
+        - Store and retrieve location-specific information using Streamlit's session state
+        - Display the session state for the selected rental location in the sidebar
+    """
     )
 
 st.markdown(
