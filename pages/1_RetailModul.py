@@ -47,20 +47,20 @@ with st.sidebar:
 with st.expander(f"{rental_location} - Retail Information", expanded=True):
     with st.form("LocationRental"):
         rental_size = st.number_input(
-            "Store Area (m2)",
+            "Rental Size (m2)",
             value=get_session_value(rental_location, "rental_size", 50),
             min_value=0,
             key=f"{rental_location}_rental_size",
         )
         rental_cost = st.number_input(
-            "Rental Cost ($)",
+            "Rental Cost (Day/m2)",
             value=get_session_value(rental_location, "rental_cost", 0.00),
             min_value=0.00,
             format="%.2f",
             key=f"{rental_location}_rental_cost",
         )
         overflow_fee = st.number_input(
-            "Overflow Fee ($)",
+            "Overflow Fee (Day/m2)",
             value=get_session_value(rental_location, "overflow_fee", 0.00),
             min_value=0.00,
             format="%.2f",
@@ -88,7 +88,7 @@ with st.expander(f"{rental_location} - Retail Information", expanded=True):
         with col2:
             for product in products:
                 product_costs[product] = st.number_input(
-                    f"Cost - {product} ($)",
+                    f"Cost - {product}",
                     value=get_session_value(rental_location, "product_costs", {}).get(
                         product, 0.00
                     ),
@@ -99,7 +99,7 @@ with st.expander(f"{rental_location} - Retail Information", expanded=True):
         with col3:
             for product in products:
                 product_sell[product] = st.number_input(
-                    label=f"Sell - {product} ($)",
+                    label=f"Sell Price - {product}",
                     value=get_session_value(rental_location, "product_sell", {}).get(
                         product, 0.00
                     ),
@@ -192,10 +192,41 @@ with tab1:
                     )
 
                     if total_area_percentage <= 100:
-                        st.success(body=f"{total_area_percentage}%")
+                        st.success(body=f"{total_area_percentage:.2f}%")
                     else:
-                        st.error(body=f"{total_area_percentage}%")
+                        st.error(body=f"{total_area_percentage:.2f}%")
 
+    with st.expander(label="Re-Stock Planning"):
+        with st.form(key="RestockPlanning"):
+            if rental_location in st.session_state.store_location:
+                columns = st.columns(len(products))
+                restock_values = {}
+                for i, product in enumerate(products):
+                    with columns[i]:
+                        restock_values[product] = st.number_input(
+                            label=f"{product} - Stock", min_value=0
+                        )
+                if st.form_submit_button(label="Calculate"):
+                    restock_size = [
+                        st.session_state.store_location[rental_location][
+                            "product_dimensions"
+                        ][product]
+                        * restock_values[product]
+                        for product in products
+                    ]
+
+                    restock_percentage = (
+                        sum(restock_size)
+                        / st.session_state.store_location[rental_location][
+                            "rental_size"
+                        ]
+                        * 100
+                    )
+
+                    if restock_percentage <= 100:
+                        st.success(f"{restock_percentage:.2f}%")
+                    else:
+                        st.error(f"{restock_percentage:.2f}%")
 
 with tab2:
     with st.expander(label="Before-And-After (Analysis)"):
@@ -361,6 +392,7 @@ with tab3:
 
                     st.success(f"Total Cost: ${total_cost:,.2f}")
                     st.success(f"Break-Even Price per Unit: ${break_even_price:.2f}")
+
     with st.expander(label="Initial-Selling-Price"):
         with st.form(key="initial_selling_price"):
             if rental_location in st.session_state.store_location:
