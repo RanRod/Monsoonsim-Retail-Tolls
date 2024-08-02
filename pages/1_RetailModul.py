@@ -242,26 +242,26 @@ with tab2:
                     "Average Order Value",
                     "Conversion Rate",
                 ],
-                key="beforeAfter_item",
+                key=f"{rental_location}_beforeAfter_item",
             )
 
             col1, col2 = st.columns(2)
             with col1:
                 before_value = st.number_input(
                     label=f"(Before) {beforeAfter_item}",
-                    key="before_value",
+                    key=f"{rental_location}_before_value",
                     value=0.0,
                     min_value=0.0,
                 )
             with col2:
                 after_value = st.number_input(
                     label=f"(After) {beforeAfter_item}",
-                    key="after_value",
+                    key=f"{rental_location}_after_value",
                     value=0.0,
                     min_value=0.0,
                 )
 
-            if st.button("Calculate"):
+            if st.button(f"{rental_location}_calculate"):
                 if before_value != 0:
                     comparison = ((after_value - before_value) / before_value) * 100
                     message = f"{beforeAfter_item} Comparison: {comparison:.2f}% - (from {before_value} to {after_value})"
@@ -286,15 +286,22 @@ with tab2:
                     label="Additional Revenue ($)", key="additional_revenue"
                 )
                 marketing_investment = st.number_input(
-                    label="Marketing Investmen ($)", key="marketing_investment"
+                    label="Marketing Investment ($)", key="marketing_investment"
                 )
 
             if st.form_submit_button(label="Calculate ROI"):
-                ROI = (additional_revenue - marketing_investment) / marketing_investment
-                if ROI > 0:
-                    st.success(f"{ROI}%")
+                if marketing_investment == 0:
+                    st.warning("Marketing investment cannot be zero.")
                 else:
-                    st.error(f"{ROI}%")
+                    ROI = (
+                        (additional_revenue - marketing_investment)
+                        / marketing_investment
+                        * 100
+                    )
+                    if ROI > 0:
+                        st.success(f"ROI: {ROI:.2f}%")
+                    else:
+                        st.error(f"ROI: {ROI:.2f}%")
 
 with tab3:
     with st.expander(label="Break-Even-Price"):
