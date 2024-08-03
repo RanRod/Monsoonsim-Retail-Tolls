@@ -245,11 +245,11 @@ if rental_location and st.session_state.selected_category:
                     else:
                         st.warning("Please enter sales values greater than zero.")
 
-        with st.sidebar:
-            try:
-                st.json(st.session_state.store_location[rental_location])
-            except KeyError:
-                st.error(body="Input Location & Category First")
-
 else:
     st.error(body="Input Location & Category First")
+
+with st.sidebar:
+    try:
+        st.json(st.session_state.store_location[rental_location])
+    except KeyError:
+        st.error(body="Input Location & Category First")
