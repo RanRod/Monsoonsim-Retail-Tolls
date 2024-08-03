@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
 st.set_page_config(
     page_title="Retail Module Tools",
@@ -152,7 +153,9 @@ if rental_location and st.session_state.selected_category:
                     },
                 )
 
-    tab1, tab2 = st.tabs([f"Capacity Planning", f"Price Strategy"])
+    tab1, tab2, tab3 = st.tabs(
+        ["Capacity Planning", "Price Strategy", "Sales Velocity"]
+    )
 
     with tab1:
         with st.expander("Capacity Planning"):
@@ -167,7 +170,9 @@ if rental_location and st.session_state.selected_category:
                             key=f"{product}_stock",
                         )
 
-                if st.form_submit_button(label="Calculate: Optimal Stock"):
+                if st.form_submit_button(
+                    label="Calculate: Optimal Stock", type="primary"
+                ):
                     rental_size = get_session_value(
                         rental_location, "rental_size", 0.00
                     )
@@ -197,12 +202,14 @@ if rental_location and st.session_state.selected_category:
                 for i, product in enumerate(products):
                     with columns[i]:
                         sales_values[product] = st.number_input(
-                            label=f"{product} - Target Sales",
+                            label=f"{product} - Sales",
                             min_value=0,
                             key=f"{product}_sales",
                         )
 
-                if st.form_submit_button(label="Calculate Minimal Price"):
+                if st.form_submit_button(
+                    label="Calculate: Average Minimum Price", type="primary"
+                ):
                     rental_size = get_session_value(
                         rental_location, "rental_size", 0.00
                     )
@@ -244,6 +251,44 @@ if rental_location and st.session_state.selected_category:
                         )
                     else:
                         st.warning("Please enter sales values greater than zero.")
+
+    with tab3:
+        with st.expander(label="Sales Velocity"):
+            col1, col2, col3 = st.columns(3)
+
+            for i, product in enumerate(products):
+                with col1 if i % 3 == 0 else col2 if i % 3 == 1 else col3:
+                    st.subheader(f"{product}")
+
+                    # Initialize session state for this product if not exists
+                    if f"tabel_sales_{product}" not in st.session_state:
+                        st.session_state[f"tabel_sales_{product}"] = pd.DataFrame(
+                            {
+                                "Days": np.arange(1, 8),
+                                "Total_Unit_Sold": np.random.randint(1, 1001, size=7),
+                            }
+                        )
+
+                    # Use the stored data
+                    tabel_sales = st.data_editor(
+                        st.session_state[f"tabel_sales_{product}"],
+                        num_rows="dynamic",
+                        use_container_width=True,
+                        key=f"editor_{product}",
+                    )
+
+                    # Update the stored data when changed
+                    st.session_state[f"tabel_sales_{product}"] = tabel_sales
+
+                    if st.button(
+                        label=f"Calculate: Sales Velocity", key=f"calc_button_{product}"
+                    ):
+                        total_unit_sold = tabel_sales["Total_Unit_Sold"].sum()
+                        sales_velocity = total_unit_sold / tabel_sales["Days"].max()
+
+                        st.info(
+                            body=f"Sales Velocity: {sales_velocity:.2f} units per day"
+                        )
 
 else:
     st.error(body="Input Location & Category First")
