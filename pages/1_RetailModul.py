@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 
-# Page configuration
 st.set_page_config(
     page_title="Retail Module Tools",
     page_icon="🏪",
@@ -9,513 +8,247 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Session state initialization
-if "store_location" not in st.session_state:
-    st.session_state.store_location = {}
+product_data = {
+    "Juices": {
+        "Apple Juice": {
+            "Costs": 15,
+            "Initial Price": 26,
+            "Shelf Life": 30,
+            "Product_Dimension": 0.0033,
+        },
+        "Orange Juice": {
+            "Costs": 17,
+            "Initial Price": 29,
+            "Shelf Life": 25,
+            "Product_Dimension": 0.0033,
+        },
+        "Melon Juice": {
+            "Costs": 19,
+            "Initial Price": 31,
+            "Shelf Life": 20,
+            "Product_Dimension": 0.0033,
+        },
+    },
+    "Gadgets": {
+        "Laptop": {
+            "Costs": 250,
+            "Initial Price": 560,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.31,
+        },
+        "Smartphone": {
+            "Costs": 170,
+            "Initial Price": 290,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.012,
+        },
+        "Witchtendo Switch": {
+            "Costs": 190,
+            "Initial Price": 310,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.024,
+        },
+    },
+    "Cafe Drinks": {},
+    "Automobiles": {},
+    "Medical Mask": {},
+}
+
+
+def update_session_state(location, data):
+    if "store_location" not in st.session_state:
+        st.session_state.store_location = {}
+    if location not in st.session_state.store_location:
+        st.session_state.store_location[location] = {}
+    st.session_state.store_location[location].update(data)
 
 
 def get_session_value(loc, key, default_value):
     return st.session_state.store_location.get(loc, {}).get(key, default_value)
 
 
-def update_session_state(location, data):
-    if location not in st.session_state.store_location:
-        st.session_state.store_location[location] = {}
-    st.session_state.store_location[location].update(data)
+if "store_location" not in st.session_state:
+    st.session_state.store_location = {}
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = None
 
-
-# Sidebar inputs
 with st.sidebar:
-    with st.expander("Input Locations & Products"):
+    with st.expander("Input Locations & Category"):
         locations = st.text_area(
             "Enter location names (one per line)", "Jakarta\nSingapore\nBangkok"
         ).split("\n")
-        products = st.text_area(
-            "Enter product names (one per line)", "Apple\nOrange\nMelon"
-        ).split("\n")
-        customers = st.text_area(
-            "Enter your customers (one per line)", "Elder\nAdult\nYoung"
-        ).split("\n")
-
-    locations = [loc.strip() for loc in locations if loc.strip()]
-    products = [p.strip() for p in products if p.strip()]
-    customers = [c.strip() for c in customers if c.strip()]
-
-    rental_location = st.selectbox("Select Retail Location", locations)
-
-# Main content
-with st.expander(f"{rental_location} - Retail Information", expanded=True):
-    with st.form("LocationRental"):
-        rental_size = st.number_input(
-            "Rental Size (m2)",
-            value=get_session_value(rental_location, "rental_size", 50),
-            min_value=0,
-            key=f"{rental_location}_rental_size",
-        )
-        rental_cost = st.number_input(
-            "Rental Cost (Day/m2)",
-            value=get_session_value(rental_location, "rental_cost", 0.00),
-            min_value=0.00,
-            format="%.2f",
-            key=f"{rental_location}_rental_cost",
-        )
-        overflow_fee = st.number_input(
-            "Overflow Fee (Day/m2)",
-            value=get_session_value(rental_location, "overflow_fee", 0.00),
-            min_value=0.00,
-            format="%.2f",
-            key=f"{rental_location}_overflow_fee",
+        locations = [loc.strip() for loc in locations if loc.strip()]
+        category = st.selectbox(
+            label="Product Configuration",
+            options=product_data.keys(),
+            key="category_selector",
         )
 
-        col1, col2, col3, col4, col5 = st.columns(5)
-        customer_segments = {}
-        product_costs = {}
-        product_sell = {}
-        product_dimensions = {}
-        product_expired = {}
-
-        with col1:
-            for customer in customers:
-                customer_segments[customer] = st.number_input(
-                    f"{customer} (Person)",
-                    value=get_session_value(
-                        rental_location, "customer_segments", {}
-                    ).get(customer, 0),
-                    min_value=0,
-                    key=f"{rental_location}_{customer}_segment",
+        if st.button("Apply Category"):
+            st.session_state.selected_category = category
+            for location in locations:
+                update_session_state(
+                    location, {"Product": product_data[category].copy()}
                 )
-
-        with col2:
-            for product in products:
-                product_costs[product] = st.number_input(
-                    f"Cost - {product}",
-                    value=get_session_value(rental_location, "product_costs", {}).get(
-                        product, 0.00
-                    ),
-                    min_value=0.00,
-                    format="%.2f",
-                    key=f"{rental_location}_{product}_cost",
-                )
-        with col3:
-            for product in products:
-                product_sell[product] = st.number_input(
-                    label=f"Sell Price - {product}",
-                    value=get_session_value(rental_location, "product_sell", {}).get(
-                        product, 0.00
-                    ),
-                    min_value=0.00,
-                    format="%.2f",
-                    key=f"{rental_location}_{product}_price",
-                )
-
-        with col4:
-            for product in products:
-                product_dimensions[product] = st.number_input(
-                    f"{product} - Dimension (m2/unit)",
-                    value=get_session_value(
-                        rental_location, "product_dimensions", {}
-                    ).get(product, 0.0000),
-                    min_value=0.0000,
-                    format="%.4f",
-                    key=f"{rental_location}_{product}_dimension",
-                )
-
-        with col5:
-            for product in products:
-                product_expired[product] = st.number_input(
-                    f"{product} - Expired Date (Day)",
-                    value=get_session_value(rental_location, "product_expired", {}).get(
-                        product, 0
-                    ),
-                    min_value=0,
-                    key=f"{rental_location}_{product}_expired",
-                )
-
-        if st.form_submit_button("Apply Information"):
-            update_session_state(
-                rental_location,
-                {
-                    "customer_segments": customer_segments,
-                    "rental_size": rental_size,
-                    "rental_cost": rental_cost,
-                    "overflow_fee": overflow_fee,
-                    "product_costs": product_costs,
-                    "product_sell": product_sell,
-                    "product_dimensions": product_dimensions,
-                    "product_expired": product_expired,
-                },
-            )
-            st.success(f"Information for {rental_location} has been updated.")
-
-tab1, tab2, tab3 = st.tabs(
-    [f"Capacity Planning", f"Marketing Evaluation", f"Price Strategy"]
-)
-
-with tab1:
-    with st.expander("Capacity Planning"):
-        with st.form("CheckPlanning"):
-            if rental_location in st.session_state.store_location:
-                columns = st.columns(len(products))
-                product_values = {}
-                for i, product in enumerate(products):
-                    with columns[i]:
-                        product_values[product] = st.selectbox(
-                            f"{product} Value",
-                            options=[
-                                1000,
-                                3000,
-                                5000,
-                                8000,
-                                12000,
-                                20000,
-                                30000,
-                                40000,
-                                50000,
-                            ],
-                            index=0,
-                        )
-
-                if st.form_submit_button("Calculate"):
-                    product_sizes = [
-                        st.session_state.store_location[rental_location][
-                            "product_dimensions"
-                        ][product]
-                        * product_values[product]
-                        for product in products
-                    ]
-                    total_area_percentage = (
-                        sum(product_sizes)
-                        / st.session_state.store_location[rental_location][
-                            "rental_size"
-                        ]
-                        * 100
-                    )
-
-                    if total_area_percentage <= 100:
-                        st.success(body=f"{total_area_percentage:.2f}%")
-                    else:
-                        st.error(body=f"{total_area_percentage:.2f}%")
-
-    with st.expander(label="Re-Stock Planning"):
-        with st.form(key="RestockPlanning"):
-            if rental_location in st.session_state.store_location:
-                columns = st.columns(len(products))
-                restock_values = {}
-                for i, product in enumerate(products):
-                    with columns[i]:
-                        restock_values[product] = st.number_input(
-                            label=f"{product} - Stock", min_value=0
-                        )
-                if st.form_submit_button(label="Calculate"):
-                    restock_size = [
-                        st.session_state.store_location[rental_location][
-                            "product_dimensions"
-                        ][product]
-                        * restock_values[product]
-                        for product in products
-                    ]
-
-                    restock_percentage = (
-                        sum(restock_size)
-                        / st.session_state.store_location[rental_location][
-                            "rental_size"
-                        ]
-                        * 100
-                    )
-
-                    if restock_percentage <= 100:
-                        st.success(f"{restock_percentage:.2f}%")
-                    else:
-                        st.error(f"{restock_percentage:.2f}%")
-
-with tab2:
-    with st.expander(label="Before-And-After (Analysis)"):
-        if (
-            "store_location" in st.session_state
-            and rental_location in st.session_state.store_location
-        ):
-            beforeAfter_item = st.selectbox(
-                label="Variables:",
-                options=[
-                    "Number Of Sales",
-                    "Revenue",
-                    "Average Order Value",
-                    "Conversion Rate",
-                ],
-                key=f"{rental_location}_beforeAfter_item",
-            )
-
-            col1, col2 = st.columns(2)
-            with col1:
-                before_value = st.number_input(
-                    label=f"(Before) {beforeAfter_item}",
-                    key=f"{rental_location}_before_value",
-                    value=0.0,
-                    min_value=0.0,
-                )
-            with col2:
-                after_value = st.number_input(
-                    label=f"(After) {beforeAfter_item}",
-                    key=f"{rental_location}_after_value",
-                    value=0.0,
-                    min_value=0.0,
-                )
-
-            if st.button(f"{rental_location}_calculate"):
-                if before_value != 0:
-                    comparison = ((after_value - before_value) / before_value) * 100
-                    message = f"{beforeAfter_item} Comparison: {comparison:.2f}% - (from {before_value} to {after_value})"
-                    if comparison > 0:
-                        st.success(body=message)
-                    else:
-                        st.error(body=message)
-                else:
-                    st.warning(
-                        "Cannot calculate percentage change when 'Before' value is zero."
-                    )
-        else:
-            st.warning("Please select a valid rental location first.")
-
-    with st.expander(label="Return Of Investment (ROI)"):
-        with st.form(key="roi_marketing"):
-            if (
-                "store_location" in st.session_state
-                and rental_location in st.session_state.store_location
-            ):
-                additional_revenue = st.number_input(
-                    label="Additional Revenue ($)", key="additional_revenue"
-                )
-                marketing_investment = st.number_input(
-                    label="Marketing Investment ($)", key="marketing_investment"
-                )
-
-            if st.form_submit_button(label="Calculate ROI"):
-                if marketing_investment == 0:
-                    st.warning("Marketing investment cannot be zero.")
-                else:
-                    ROI = (
-                        (additional_revenue - marketing_investment)
-                        / marketing_investment
-                        * 100
-                    )
-                    if ROI > 0:
-                        st.success(f"ROI: {ROI:.2f}%")
-                    else:
-                        st.error(f"ROI: {ROI:.2f}%")
-
-with tab3:
-    with st.expander(label="Break-Even-Price"):
-        with st.form(key="break_even_point"):
-            if rental_location in st.session_state.store_location:
-                # Row 1: Store Information
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    store_area = st.number_input(
-                        label="Store Area (m2)",
-                        value=get_session_value(rental_location, "rental_size", 0),
-                        disabled=True,
-                        key="bep_store_area",
-                    )
-                with col2:
-                    rental_cost_per_day = st.number_input(
-                        label="Rental Cost (Day)",
-                        value=get_session_value(rental_location, "rental_cost", 0),
-                        disabled=True,
-                        key="bep_rental_cost",
-                    )
-                with col3:
-                    rental_period = st.selectbox(
-                        label="Rental Period (Day)",
-                        options=[30],
-                        key="bep_rental_period",
-                    )
-
-                # Row 2: Marketing Information
-                col1, col2 = st.columns(2)
-                with col1:
-                    marketing_cost_per_day = st.number_input(
-                        label="Marketing Cost (Day)",
-                        value=0,
-                        min_value=0,
-                        key="bep_marketing_cost",
-                    )
-                with col2:
-                    marketing_period = st.selectbox(
-                        label="Marketing Period (Day)",
-                        options=[30],
-                        key="bep_marketing_period",
-                    )
-
-                # Row 3: Product Information
-                st.markdown("---")
-                product_values = {}
-                product_costs = {}
-                for i, product in enumerate(products):
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        product_values[product] = st.selectbox(
-                            f"{product} Value",
-                            options=[
-                                1000,
-                                3000,
-                                5000,
-                                8000,
-                                12000,
-                                20000,
-                                30000,
-                                40000,
-                                50000,
-                            ],
-                            key=f"bep_product_value_{product}",
-                        )
-                    with col2:
-                        product_costs[product] = st.number_input(
-                            f"Cost - {product} ($)",
-                            value=get_session_value(
-                                rental_location, "product_costs", {}
-                            ).get(product, 0.00),
-                            min_value=0.00,
-                            format="%.2f",
-                            disabled=True,
-                            key=f"bep_product_cost_{product}",
-                        )
-
-                # Row 4: Calculate Button
-                st.markdown("---")
-                if st.form_submit_button("Submit: Break-Even Price"):
-                    total_purchase_cost = sum(
-                        product_values[product] * product_costs[product]
-                        for product in products
-                    )
-                    total_rental_cost = rental_cost_per_day * rental_period
-                    total_marketing_cost = marketing_cost_per_day * marketing_period
-                    total_cost = (
-                        total_purchase_cost + total_rental_cost + total_marketing_cost
-                    )
-
-                    total_units_sold = sum(product_values.values())
-
-                    break_even_price = total_cost / total_units_sold
-
-                    st.success(f"Total Cost: ${total_cost:,.2f}")
-                    st.success(f"Break-Even Price per Unit: ${break_even_price:.2f}")
-
-    with st.expander(label="Initial-Selling-Price"):
-        with st.form(key="initial_selling_price"):
-            if rental_location in st.session_state.store_location:
-                # Row 1: Store Information
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    store_area = st.number_input(
-                        label="Store Area (m2)",
-                        value=get_session_value(rental_location, "rental_size", 0),
-                        disabled=True,
-                        key="isp_store_area",
-                    )
-                with col2:
-                    rental_cost_per_day = st.number_input(
-                        label="Rental Cost (Day)",
-                        value=get_session_value(rental_location, "rental_cost", 0),
-                        disabled=True,
-                        key="isp_rental_cost",
-                    )
-                with col3:
-                    rental_period = st.selectbox(
-                        label="Rental Period (Day)",
-                        options=[30],
-                        key="isp_rental_period",
-                    )
-
-                # Row 2: Marketing Information
-                col1, col2 = st.columns(2)
-                with col1:
-                    marketing_cost_per_day = st.number_input(
-                        label="Marketing Cost (Day)",
-                        value=0,
-                        min_value=0,
-                        key="isp_marketing_cost",
-                    )
-                with col2:
-                    marketing_period = st.selectbox(
-                        label="Marketing Period (Day)",
-                        options=[30],
-                        key="isp_marketing_period",
-                    )
-
-                # Row 3: Product Information
-                st.markdown("---")
-                product_values = {}
-                product_costs = {}
-                product_sell = {}
-                for i, product in enumerate(products):
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        product_values[product] = st.selectbox(
-                            f"{product} Value",
-                            options=[
-                                1000,
-                                3000,
-                                5000,
-                                8000,
-                                12000,
-                                20000,
-                                30000,
-                                40000,
-                                50000,
-                            ],
-                            key=f"isp_product_value_{product}",
-                        )
-                    with col2:
-                        product_costs[product] = st.number_input(
-                            f"Cost - {product} ($)",
-                            value=get_session_value(
-                                rental_location, "product_costs", {}
-                            ).get(product, 0.00),
-                            min_value=0.00,
-                            format="%.2f",
-                            disabled=True,
-                            key=f"isp_product_cost_{product}",
-                        )
-                    with col3:
-                        product_sell[product] = st.number_input(
-                            label=f"Sell - {product} ($)",
-                            value=get_session_value(
-                                rental_location, "product_sell", {}
-                            ).get(product, 0.00),
-                            min_value=0.00,
-                            format="%.2f",
-                            key=f"isp_product_sell_{product}",
-                        )
-
-                # Row 4: Calculate Button
-                st.markdown("---")
-                if st.form_submit_button("Submit: Initial-Selling-Price"):
-                    total_pendapatan = sum(
-                        product_values[product] * product_sell[product]
-                        for product in products
-                    )
-                    total_biaya = (
-                        sum(
-                            product_values[product] * product_costs[product]
-                            for product in products
-                        )
-                        + (rental_cost_per_day * rental_period)
-                        + (marketing_cost_per_day * marketing_period)
-                    )
-
-                    if total_pendapatan > total_biaya:
-                        profit = total_pendapatan - total_biaya
-                        st.success(f"Total Revenue: ${total_pendapatan:,.2f}")
-                        st.success(f"Total Cost: ${total_biaya:,.2f}")
-                        st.success(f"Profit: ${profit:,.2f}")
-                    else:
-                        loss = total_biaya - total_pendapatan
-                        st.error(f"Total Revenue: ${total_pendapatan:,.2f}")
-                        st.error(f"Total Cost: ${total_biaya:,.2f}")
-                        st.error(f"Loss: ${loss:,.2f}")  # Display session state
+            st.success(f"Applied {category} to all locations")
 
 with st.sidebar:
-    try:
-        st.json(st.session_state.store_location[rental_location])
-    except KeyError:
-        st.error(body="Apply Retail Information First")
+    st.markdown(body="---")
+    if st.session_state.store_location:
+        rental_location = st.selectbox(
+            "Retail Location", list(st.session_state.store_location.keys())
+        )
+    else:
+        rental_location = None
+
+if rental_location and st.session_state.selected_category:
+    products = list(st.session_state.store_location[rental_location]["Product"].keys())
+    with st.expander(f"{rental_location} - Retail Information", expanded=True):
+        with st.form("LocationRental"):
+            rental_size = st.number_input(
+                "Rental Size (m2)",
+                min_value=0.00,
+                format="%.2f",
+                key=f"{rental_location}_rental_size",
+                value=get_session_value(rental_location, "rental_size", 0.00),
+            )
+            rental_cost = st.number_input(
+                "Rental Cost (Day/m2)",
+                min_value=0.00,
+                format="%.2f",
+                key=f"{rental_location}_rental_cost",
+                value=get_session_value(rental_location, "rental_cost", 0.00),
+            )
+            overflow_fee = st.number_input(
+                "Overflow Fee (Day/m2)",
+                min_value=0.00,
+                format="%.2f",
+                key=f"{rental_location}_overflow_fee",
+                value=get_session_value(rental_location, "overflow_fee", 0.00),
+            )
+
+            st.markdown("---")
+
+            # Data Input Tabel
+            df = pd.DataFrame(
+                st.session_state.store_location[rental_location]["Product"]
+            ).T.reset_index()
+            df.columns = ["Product"] + list(df.columns[1:])
+            edited_df = st.data_editor(
+                data=df, num_rows="dynamic", use_container_width=True
+            )
+
+            st.markdown("---")
+
+            if st.form_submit_button(label="Apply Information", type="primary"):
+                edited_data = edited_df.set_index("Product").T.to_dict()
+                update_session_state(
+                    rental_location,
+                    {
+                        "Product": edited_data,
+                        "rental_size": rental_size,
+                        "rental_cost": rental_cost,
+                        "overflow_fee": overflow_fee,
+                    },
+                )
+
+    tab1, tab2 = st.tabs([f"Capacity Planning", f"Price Strategy"])
+
+    with tab1:
+        with st.expander("Capacity Planning"):
+            with st.form("CheckPlanning"):
+                columns = st.columns(len(products))
+                planning_values = {}
+                for i, product in enumerate(products):
+                    with columns[i]:
+                        planning_values[product] = st.number_input(
+                            label=f"{product} - Stock",
+                            min_value=0,
+                            key=f"{product}_stock",
+                        )
+
+                if st.form_submit_button(label="Calculate: Optimal Stock"):
+                    rental_size = get_session_value(
+                        rental_location, "rental_size", 0.00
+                    )
+                    if rental_size > 0:
+                        restock_size = []
+                        for product in products:
+                            restock_size.append(
+                                st.session_state.store_location[rental_location][
+                                    "Product"
+                                ][product]["Product_Dimension"]
+                                * planning_values[product]
+                            )
+                        stock_percentage = sum(restock_size) / rental_size * 100
+
+                        if stock_percentage <= 100:
+                            st.success(f"Stock Percentage: {stock_percentage:.2f}%")
+                        else:
+                            st.error(f"Stock Percentage: {stock_percentage:.2f}%")
+                    else:
+                        st.warning("Please apply the rental information first.")
+
+    with tab2:
+        with st.expander(label="Minimal Price Calculation"):
+            with st.form("MinimalPriceCalculation"):
+                columns = st.columns(len(products))
+                sales_values = {}
+                for i, product in enumerate(products):
+                    with columns[i]:
+                        sales_values[product] = st.number_input(
+                            label=f"{product} - Target Sales",
+                            min_value=0,
+                            key=f"{product}_sales",
+                        )
+
+                if st.form_submit_button(label="Calculate Minimal Price"):
+                    rental_size = get_session_value(
+                        rental_location, "rental_size", 0.00
+                    )
+                    rental_cost = get_session_value(
+                        rental_location, "rental_cost", 0.00
+                    )
+                    overflow_fee = get_session_value(
+                        rental_location, "overflow_fee", 0.00
+                    )
+
+                    total_rental_cost = rental_size * rental_cost
+                    total_product_volume = sum(
+                        st.session_state.store_location[rental_location]["Product"][
+                            product
+                        ]["Product_Dimension"]
+                        * sales_values[product]
+                        for product in products
+                    )
+
+                    overflow_cost = max(
+                        0, (total_product_volume - rental_size) * overflow_fee
+                    )
+
+                    total_product_cost = sum(
+                        st.session_state.store_location[rental_location]["Product"][
+                            product
+                        ]["Costs"]
+                        * sales_values[product]
+                        for product in products
+                    )
+
+                    total_cost = total_rental_cost + overflow_cost + total_product_cost
+                    total_sales = sum(sales_values.values())
+
+                    if total_sales > 0:
+                        minimal_price = total_cost / total_sales
+                        st.success(
+                            f"Minimal price per unit to cover all costs: {minimal_price:.2f}"
+                        )
+                    else:
+                        st.warning("Please enter sales values greater than zero.")
+        with st.sidebar:
+            try:
+                st.json(st.session_state.store_location[rental_location])
+            except KeyError:
+                st.error(body="Input Location & Category First")
+
+else:
+    st.error(body="Input Location & Category First")
