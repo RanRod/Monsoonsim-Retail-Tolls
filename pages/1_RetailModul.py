@@ -50,9 +50,66 @@ product_data = {
             "Product_Dimension": 0.024,
         },
     },
-    "Cafe Drinks": {},
-    "Automobiles": {},
-    "Medical Mask": {},
+    "Cafe Drinks": {
+        "Americano": {
+            "Costs": 10,
+            "Initial Price": 32,
+            "Shelf Life": 30,
+            "Product_Dimension": 0.005,
+        },
+        "Hot Chocolate": {
+            "Costs": 13,
+            "Initial Price": 35,
+            "Shelf Life": 25,
+            "Product_Dimension": 0.005,
+        },
+        "Bubble Milk Tea": {
+            "Costs": 16,
+            "Initial Price": 38,
+            "Shelf Life": 20,
+            "Product_Dimension": 0.005,
+        },
+    },
+    "Automobiles": {
+        "Sedan": {
+            "Costs": 15000,
+            "Initial Price": 28000,
+            "Shelf Life": 0,
+            "Product_Dimension": 18.5,
+        },
+        "SUV": {
+            "Costs": 17000,
+            "Initial Price": 36000,
+            "Shelf Life": 0,
+            "Product_Dimension": 23.2,
+        },
+        "Truck": {
+            "Costs": 19000,
+            "Initial Price": 41000,
+            "Shelf Life": 0,
+            "Product_Dimension": 28.2,
+        },
+    },
+    "Medical Mask": {
+        "Dust Mask": {
+            "Costs": 18,
+            "Initial Price": 40,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.0133,
+        },
+        "Surgical Mask": {
+            "Costs": 10,
+            "Initial Price": 20,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.0083,
+        },
+        "KN95": {
+            "Costs": 19,
+            "Initial Price": 31,
+            "Shelf Life": 0,
+            "Product_Dimension": 0.012,
+        },
+    },
 }
 
 
@@ -153,8 +210,13 @@ if rental_location and st.session_state.selected_category:
                     },
                 )
 
-    tab1, tab2, tab3 = st.tabs(
-        ["Capacity Planning", "Price Strategy", "Sales Velocity"]
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "Capacity Planning",
+            "Price Strategy",
+            "Sales Velocity",
+            "Marketing Evaluation",
+        ]
     )
 
     with tab1:
@@ -254,47 +316,55 @@ if rental_location and st.session_state.selected_category:
 
     with tab3:
         with st.expander(label="Sales Velocity"):
-            col1, col2, col3 = st.columns(3)
+            df_sales = pd.DataFrame({"Day": []})
+            for product in products:
+                df_sales[f"UnitSold - {product}"] = []
+            sales_editor = st.data_editor(
+                data=df_sales, use_container_width=True, num_rows="dynamic"
+            )
 
-            for i, product in enumerate(products):
-                with col1 if i % 3 == 0 else col2 if i % 3 == 1 else col3:
-                    st.subheader(f"{product}")
-
-                    # Initialize session state for this product if not exists
-                    if f"tabel_sales_{product}" not in st.session_state:
-                        st.session_state[f"tabel_sales_{product}"] = pd.DataFrame(
-                            {
-                                "Days": np.arange(1, 8),
-                                "Total_Unit_Sold": np.random.randint(1, 1001, size=7),
-                            }
-                        )
-
-                    # Use the stored data
-                    tabel_sales = st.data_editor(
-                        st.session_state[f"tabel_sales_{product}"],
-                        num_rows="dynamic",
-                        use_container_width=True,
-                        key=f"editor_{product}",
+            if st.button(label="Calculate: Sales Velocity", type="primary"):
+                for product in products:
+                    st.info(
+                        f"Avg Sales - {product}: {round(sum(sales_editor[f'UnitSold - {product}']) / max(sales_editor['Day']), 2)} (units per-day)"
                     )
 
-                    # Update the stored data when changed
-                    st.session_state[f"tabel_sales_{product}"] = tabel_sales
+    with tab4:
+        with st.expander(label="Sales Comparison"):
+            sales_data = {}
+            for product in products:
+                st.markdown(body=f"***{product}***")
+                sales_data[product] = st.data_editor(
+                    data=pd.DataFrame(
+                        {"Day": [], "UnitSold-Before": [], "UnitSold-After": []}
+                    ),
+                    num_rows="dynamic",
+                    key=f"sales_{product}",
+                    use_container_width=True,
+                )
+                st.markdown("---")
 
-                    if st.button(
-                        label=f"Calculate: Sales Velocity", key=f"calc_button_{product}"
-                    ):
-                        total_unit_sold = tabel_sales["Total_Unit_Sold"].sum()
-                        sales_velocity = total_unit_sold / tabel_sales["Days"].max()
-
-                        st.info(
-                            body=f"Sales Velocity: {sales_velocity:.2f} units per day"
+            if st.button(label="Compare", type="primary", use_container_width=True):
+                for product, data in sales_data.items():
+                    if not data.empty:
+                        before_sales = data["UnitSold-Before"].sum()
+                        after_sales = data["UnitSold-After"].sum()
+                        change = after_sales - before_sales
+                        percent_change = (
+                            (change / before_sales) * 100 if before_sales != 0 else 0
                         )
 
+                        st.write(f"**{product}**")
+                        st.write(f"Change: {change} ({percent_change:.2f}%)")
+                        st.write("---")
+                    else:
+                        st.write(f"No data available for {product}")
 else:
     st.error(body="Input Location & Category First")
 
 with st.sidebar:
     try:
-        st.json(st.session_state.store_location[rental_location])
+        with st.expander(label=f"JSON-{rental_location}"):
+            st.json(st.session_state.store_location[rental_location])
     except KeyError:
         st.error(body="Input Location & Category First")
