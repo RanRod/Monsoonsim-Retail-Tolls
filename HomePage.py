@@ -134,36 +134,38 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-with st.expander("Advanced Features"):
+with st.expander("Features"):
     st.markdown(
         """
     1. Multi-Location Management:
         - Manage multiple retail locations
         - Input location-specific details like rental size, rental cost, and overflow fee
-        - Customize product lists and customer segments for each location
+        - Apply product categories to all locations
     
-    2. **Retail Information Tracking**:
+    2. Retail Information Tracking:
         - Record store rental size, rental costs, and overflow fees
-        - Track product details like costs, selling prices, dimensions, and expiration dates
+        - Track product details like costs, initial prices, shelf life, and product dimensions
         - Store and retrieve location-specific information using session state
 
-    3. **Capacity Planning**:
-        - Optimize store space usage by calculating total area percentage occupied by products
-        - Provide feedback on whether the selected product quantities exceed the available rental size
-        - Plan restocking by calculating the percentage of space required for restocking
+    3. Capacity Planning:
+        - Calculate stock percentage based on product dimensions and rental size
+        - Provide feedback on whether the selected product quantities exceed the available rental space
 
-    4. **Marketing Evaluation**:
-        - Perform before-and-after analysis to evaluate the impact of marketing campaigns
-        - Calculate the percentage change in key variables like number of sales and revenue
-        - Determine the Return on Investment (ROI) for marketing campaigns
+    4. Price Strategy:
+        - Calculate the average minimum price per unit to cover all costs
+        - Consider rental costs, overflow fees, and product costs in the calculation
 
-    5. **Pricing Strategies**:
-        - Calculate the break-even price per unit considering rental costs, marketing costs, and product costs
-        - Analyze the initial selling price and determine profitability based on total revenue and total cost
+    5. Sales Velocity:
+        - Input daily sales data for each product
+        - Calculate average sales per day for each product
 
-    6. **Session State Management**:
+    6. Marketing Evaluation:
+        - Compare before and after sales data for each product
+        - Calculate the change in sales and percentage change
+
+    7. Session State Management:
         - Store and retrieve location-specific information using Streamlit's session state
-        - Display the session state for the selected rental location in the sidebar
+        - Display the session state for the selected rental location in the sidebar as JSON
     """
     )
 
@@ -171,9 +173,14 @@ st.markdown(
     """
     ### How to Use This Tool:
 
-    1. Use the sidebar to input your store locations, products, and customer segments.
+    1. Use the sidebar to input your store locations and select a product category.
     2. Select a store location to view and edit its specific details.
-    3. Utilize the various tools in each tab to analyze different aspects of your retail operations.
-    4. View your session data in the sidebar for a quick overview of your inputs.
+    3. Use the "Retail Information" expander to input rental details and edit product information.
+    4. Utilize the various tools in each tab to analyze different aspects of your retail operations:
+       - Capacity Planning: Check if your stock fits within the rental space
+       - Price Strategy: Calculate minimum prices to cover costs
+       - Sales Velocity: Track and analyze daily sales
+       - Marketing Evaluation: Compare sales before and after marketing efforts
+    5. View your session data in the sidebar for a quick overview of your inputs.
     """
 )

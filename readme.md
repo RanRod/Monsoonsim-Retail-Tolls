@@ -6,18 +6,25 @@ MonsoonSIM Retail Module Tools is an advanced application designed to enhance th
 
 ## Features
 
-- **Multi-Location Management**: Manage multiple store locations and customize product lists and customer segments.
-- **Store Information Tracking**: Record and analyze store area, rental costs, overflow fees, and detailed product information.
-- **Capacity Planning**: Optimize store space usage and visualize capacity utilization.
-- **Pricing Strategies**: Utilize Break-Even Price Calculator and Initial Selling Price Analysis tools.
-- **Marketing Evaluation**: Compare strategies across different locations.
+- **Multi-Location Management**: Manage multiple store locations and apply product categories across all locations.
+- **Store Information Tracking**: Record and analyze store rental size, rental costs, overflow fees, and detailed product information (costs, initial prices, shelf life, and dimensions).
+- **Capacity Planning**: Calculate stock percentage based on product dimensions and rental size, providing feedback on space utilization.
+- **Price Strategy**: Calculate the average minimum price per unit to cover all costs, including rental, overflow, and product costs.
+- **Sales Velocity**: Track and analyze daily sales data for each product, calculating average sales per day.
+- **Marketing Evaluation**: Compare before and after sales data for each product, calculating changes and percentage differences.
+- **Session State Management**: Store and retrieve location-specific information, with JSON display in the sidebar.
 
 ## How to Use
 
-1. Use the sidebar to input your store locations, products, and customer segments.
+1. Use the sidebar to input your store locations and select a product category.
 2. Select a store location to view and edit its specific details.
-3. Utilize the various tools in each tab to analyze different aspects of your retail operations.
-4. View your session data in the sidebar for a quick overview of your inputs.
+3. Use the "Retail Information" expander to input rental details and edit product information.
+4. Utilize the various tools in each tab to analyze different aspects of your retail operations:
+   - Capacity Planning: Check if your stock fits within the rental space
+   - Price Strategy: Calculate minimum prices to cover costs
+   - Sales Velocity: Track and analyze daily sales
+   - Marketing Evaluation: Compare sales before and after marketing efforts
+5. View your session data in the sidebar for a quick overview of your inputs.
 
 ## Technologies Used
 
