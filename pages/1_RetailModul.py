@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(
     page_title="Retail Module Tools",
@@ -128,15 +129,15 @@ def get_session_value(loc, key, default_value):
 
 if "store_location" not in st.session_state:
     st.session_state.store_location = {}
-if "selected_category" not in st.session_state:
-    st.session_state.selected_category = None
 
 with st.sidebar:
     with st.expander("Input Locations & Category"):
         locations = st.text_area(
             "Enter location names (one per line)", "Jakarta\nSingapore\nBangkok"
         ).split("\n")
+
         locations = [loc.strip() for loc in locations if loc.strip()]
+
         category = st.selectbox(
             label="Product Configuration",
             options=product_data.keys(),
@@ -144,10 +145,10 @@ with st.sidebar:
         )
 
         if st.button(label="Apply Data", type="primary"):
-            st.session_state.selected_category = category
             for location in locations:
                 update_session_state(
-                    location, {"Product": product_data[category].copy()}
+                    location,
+                    {"product": product_data[category].copy(), "status": False},
                 )
             st.success(f"Applied {category} to all locations")
 
@@ -160,8 +161,8 @@ with st.sidebar:
     else:
         rental_location = None
 
-if rental_location and st.session_state.selected_category:
-    products = list(st.session_state.store_location[rental_location]["Product"].keys())
+if rental_location:
+    products = list(st.session_state.store_location[rental_location]["product"].keys())
     with st.expander(f"{rental_location} - Retail Information", expanded=True):
         with st.form("LocationRental"):
             rental_size = st.number_input(
@@ -183,176 +184,204 @@ if rental_location and st.session_state.selected_category:
 
             # Data Input Tabel
             df = pd.DataFrame(
-                st.session_state.store_location[rental_location]["Product"]
+                st.session_state.store_location[rental_location]["product"]
             ).T.reset_index()
-            df.columns = ["Product"] + list(df.columns[1:])
+            df.columns = ["product"] + list(df.columns[1:])
             edited_df = st.data_editor(
                 data=df, num_rows="dynamic", use_container_width=True
             )
 
             st.markdown("---")
 
-            if st.form_submit_button(label="Apply Information", type="primary"):
-                edited_data = edited_df.set_index("Product").T.to_dict()
+            if st.form_submit_button(
+                label="Apply Information", type="primary", use_container_width=True
+            ):
+                edited_data = edited_df.set_index("product").T.to_dict()
                 update_session_state(
                     rental_location,
                     {
-                        "Product": edited_data,
+                        "product": edited_data,
                         "rental_size": rental_size,
                         "rental_cost": rental_cost,
+                        "status": True,
                     },
                 )
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(
-        [
-            "Capacity Planning",
-            "COGS | Sales",
-            "Price Strategy",
-            "Sales Velocity",
-            "Marketing Evaluation",
-        ]
-    )
+    if st.session_state.store_location[rental_location]["status"] == True:
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+            [
+                "Capacity Planning",
+                "COGS | Sales",
+                "Price Strategy",
+                "Sales Velocity",
+                "Marketing Evaluation",
+            ]
+        )
 
-    with tab1:
-        with st.expander("Optimal Stock"):
-            with st.form("CheckPlanning"):
-                columns = st.columns(len(products))
-                planning_values = {}
-                for i, product in enumerate(products):
-                    with columns[i]:
-                        planning_values[product] = st.number_input(
-                            label=f"{product} - Stock",
-                            min_value=0,
-                            key=f"{product}_stock",
-                            step=1000,
+        with tab1:
+            with st.expander("Optimal Stock"):
+                with st.form("CheckPlanning"):
+                    columns = st.columns(len(products))
+                    planning_values = {}
+                    for i, product in enumerate(products):
+                        with columns[i]:
+                            planning_values[product] = st.number_input(
+                                label=f"{product} - Stock",
+                                min_value=0,
+                                key=f"{product}_stock",
+                                step=1000,
+                            )
+
+                    if st.form_submit_button(
+                        label="Calculate: Optimal Stock", type="primary"
+                    ):
+                        rental_size = get_session_value(
+                            rental_location, "rental_size", 0.00
                         )
 
-                if st.form_submit_button(
-                    label="Calculate: Optimal Stock", type="primary"
+                        if rental_size > 0:
+                            restock_size = []
+                            for product in products:
+                                restock_size.append(
+                                    st.session_state.store_location[rental_location][
+                                        "product"
+                                    ][product]["Product_Dimension"]
+                                    * planning_values[product]
+                                )
+                            stock_percentage = sum(restock_size) / rental_size * 100
+
+                            if stock_percentage <= 100:
+                                st.success(f"Stock Percentage: {stock_percentage:.2f}%")
+                            else:
+                                st.error(f"Stock Percentage: {stock_percentage:.2f}%")
+
+        with tab2:
+            with st.expander(label="COGS | Sales (Per-Product)"):
+                COGS_SALE = {"Day": []}
+                for product in products:
+                    COGS_SALE[f"{product}_Sales"] = []
+                    COGS_SALE[f"{product}_COGS(Acc.)"] = []
+
+                COGS_SALE = st.data_editor(
+                    data=COGS_SALE, num_rows="dynamic", use_container_width=True
+                )
+
+                COGS_SALE = pd.DataFrame(COGS_SALE)
+
+                if st.button(
+                    label="Visualize", type="primary", use_container_width=True
                 ):
-                    rental_size = get_session_value(
-                        rental_location, "rental_size", 0.00
-                    )
-                    if rental_size > 0:
-                        restock_size = []
-                        for product in products:
-                            restock_size.append(
-                                st.session_state.store_location[rental_location][
-                                    "Product"
-                                ][product]["Product_Dimension"]
-                                * planning_values[product]
-                            )
-                        stock_percentage = sum(restock_size) / rental_size * 100
+                    for product in products:
+                        COGS_SALE[f"{product}_COGS(Non-Acc.)"] = COGS_SALE[
+                            f"{product}_COGS(Acc.)"
+                        ].diff()
 
-                        if stock_percentage <= 100:
-                            st.success(f"Stock Percentage: {stock_percentage:.2f}%")
-                        else:
-                            st.error(f"Stock Percentage: {stock_percentage:.2f}%")
-                    else:
-                        st.warning("Please apply the rental information first.")
+                        # Set the first row of Non-Acc. to be equal to Acc. since there's no previous row to subtract
+                        COGS_SALE.loc[
+                            COGS_SALE.index[0], f"{product}_COGS(Non-Acc.)"
+                        ] = COGS_SALE.loc[COGS_SALE.index[0], f"{product}_COGS(Acc.)"]
 
-    with tab2:
-        with st.expander(label="COGS | Sales (Per-Product)"):
-            COGS_SALE = st.data_editor(
-                data=pd.DataFrame(
-                    {
-                        "Day": [],
-                        "Sales": [],
-                        "COGS(Accumulated)": [],
-                    }
-                ),
-                num_rows="dynamic",
-                use_container_width=True,
-            )
-
-            if st.button(label="Calculate", use_container_width=True, type="primary"):
-                COGS_SALE["COGS(Non-Accumulated)"] = COGS_SALE[
-                    "COGS(Accumulated)"
-                ].diff()
-                COGS_SALE.loc[0, "COGS(Non-Accumulated)"] = COGS_SALE.loc[
-                    0, "COGS(Accumulated)"
-                ]
-
-                COGS_SALE = COGS_SALE.fillna(value=0)
-
-                col1, col2 = st.columns(spec=2)
-                with col1:
-                    st.write(COGS_SALE)
-
-                with col2:
                     fig = px.line(
                         data_frame=COGS_SALE,
-                        x=COGS_SALE["Day"],
-                        y=["Sales", "COGS(Non-Accumulated)"],
+                        x="Day",
+                        y=[f"{product}_Sales" for product in products]
+                        + [f"{product}_COGS(Non-Acc.)" for product in products],
                         markers=True,
                     )
-                    st.plotly_chart(fig)
+                    st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
-    with tab3:
-        with st.expander(label="Minimal Price Calculation"):
-            with st.form("MinimalPriceCalculation"):
+        with tab3:
+            with st.expander(label="Minimal Price Calculation"):
+                with st.form("MinimalPriceCalculation"):
 
-                minimal_price = {}
-                minimal_price["rental_size"] = st.number_input(
-                    label="Rental Size:",
-                    value=get_session_value(rental_location, "rental_size", 0.00),
-                    disabled=True,
-                )
-                minimal_price["rental_cost"] = st.number_input(
-                    label="Rental Cost:",
-                    value=get_session_value(rental_location, "rental_cost", 0.00),
-                    disabled=True,
-                )
-                if st.form_submit_button(
-                    label="Calculate: Minimal Price", type="primary"
-                ):
-                    minimal_price["rental_size"] * minimal_price["rental_cost"]
-
-    with tab4:
-        with st.expander(label="Sales Velocity"):
-            df_sales = pd.DataFrame({"Day": []})
-            for product in products:
-                df_sales[f"UnitSold - {product}"] = []
-            sales_editor = st.data_editor(
-                data=df_sales, use_container_width=True, num_rows="dynamic"
-            )
-
-            if st.button(label="Calculate: Sales Velocity", type="primary"):
-                for product in products:
-                    st.info(
-                        f"Avg Sales - {product}: {round(sum(sales_editor[f'UnitSold - {product}']) / max(sales_editor['Day']), 2)} (units per-day)"
+                    minimal_price = {}
+                    minimal_price["rental_size"] = st.number_input(
+                        label="Rental Size:",
+                        value=get_session_value(rental_location, "rental_size", 0.00),
+                        disabled=True,
                     )
+                    minimal_price["rental_cost"] = st.number_input(
+                        label="Rental Cost:",
+                        value=get_session_value(rental_location, "rental_cost", 0.00),
+                        disabled=True,
+                    )
+                    if st.form_submit_button(
+                        label="Calculate: Minimal Price", type="primary"
+                    ):
+                        minimal_price["rental_size"] * minimal_price["rental_cost"]
 
-    with tab5:
-        with st.expander(label="Marketing - Sales Comparison"):
-            sales_data = {}
-            for product in products:
-                st.markdown(body=f"***{product}***")
-                sales_data[product] = st.data_editor(
-                    data=pd.DataFrame(
-                        {"Day": [], "UnitSold-Before": [], "UnitSold-After": []}
-                    ),
-                    num_rows="dynamic",
-                    key=f"sales_{product}",
-                    use_container_width=True,
+        with tab4:
+            with st.expander(label="Sales Velocity"):
+                df_sales = pd.DataFrame({"Day": []})
+                for product in products:
+                    df_sales[f"UnitSold - {product}"] = []
+                sales_editor = st.data_editor(
+                    data=df_sales, use_container_width=True, num_rows="dynamic"
                 )
-                st.markdown("---")
 
-            if st.button(label="Compare", type="primary", use_container_width=True):
-                for product, data in sales_data.items():
-                    if not data.empty:
-                        before_sales = data["UnitSold-Before"].sum()
-                        after_sales = data["UnitSold-After"].sum()
-                        change = after_sales - before_sales
-                        percent_change = (
-                            (change / before_sales) * 100 if before_sales != 0 else 0
+                if st.button(label="Calculate: Sales Velocity", type="primary"):
+                    for product in products:
+                        st.info(
+                            f"Avg Sales - {product}: {round(sum(sales_editor[f'UnitSold - {product}']) / max(sales_editor['Day']), 2)} (units per-day)"
                         )
 
-                        st.write(f"**{product}**")
-                        st.write(f"Change: {change} ({percent_change:.2f}%)")
-                        st.write("---")
-                    else:
-                        st.write(f"No data available for {product}")
+        with tab5:
+            with st.expander(label="Marketing - Sales Comparison"):
+                sales_data = {
+                    "Day": [],
+                }
+
+                for product in products:
+                    sales_data[f"{product}_UnitSold-Before"] = []
+                    sales_data[f"{product}_UnitSold-After"] = []
+
+                sales_data = st.data_editor(
+                    data=sales_data, num_rows="dynamic", use_container_width=True
+                )
+
+                sales_data = pd.DataFrame(sales_data)
+
+                if st.button(label="Compare", type="primary", use_container_width=True):
+                    before_sales = []
+                    after_sales = []
+                    product_names = []
+
+                    for product in products:
+                        before_column = f"{product}_UnitSold-Before"
+                        after_column = f"{product}_UnitSold-After"
+
+                        if (
+                            before_column in sales_data.columns
+                            and after_column in sales_data.columns
+                        ):
+                            before = sales_data[before_column].sum()
+                            after = sales_data[after_column].sum()
+                            change = after - before
+                            percent_change = (
+                                (change / before) * 100 if before != 0 else 0
+                            )
+
+                            before_sales.append(before)
+                            after_sales.append(after)
+                            product_names.append(product)
+
+                    fig = go.Figure(
+                        data=[
+                            go.Bar(name="Before", x=product_names, y=before_sales),
+                            go.Bar(name="After", x=product_names, y=after_sales),
+                        ]
+                    )
+
+                    # Update layout
+                    fig.update_layout(
+                        title="Sales Comparison Before and After Marketing",
+                        xaxis_title="Products",
+                        yaxis_title="Units Sold",
+                        barmode="group",
+                    )
+
+                    # Display the chart
+                    st.plotly_chart(fig, use_container_width=True)
 
 else:
     st.error(body="Input Location & Category First")
