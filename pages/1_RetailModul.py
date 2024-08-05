@@ -252,7 +252,7 @@ if rental_location and st.session_state.selected_category:
                         st.warning("Please apply the rental information first.")
 
     with tab2:
-        with st.expander(label="COGS | Sales"):
+        with st.expander(label="COGS | Sales (Per-Product)"):
             COGS_SALE = st.data_editor(
                 data=pd.DataFrame(
                     {
