@@ -13,100 +13,100 @@ product_data = {
     "Juices": {
         "Apple Juice": {
             "Costs": 15,
-            "Initial Price": 26,
-            "Shelf Life": 30,
+            "Initial_Price": 26,
+            "Shelf_Life": 30,
             "Product_Dimension": 0.0033,
         },
         "Orange Juice": {
             "Costs": 17,
-            "Initial Price": 29,
-            "Shelf Life": 25,
+            "Initial_Price": 29,
+            "Shelf_Life": 25,
             "Product_Dimension": 0.0033,
         },
         "Melon Juice": {
             "Costs": 19,
-            "Initial Price": 31,
-            "Shelf Life": 20,
+            "Initial_Price": 31,
+            "Shelf_Life": 20,
             "Product_Dimension": 0.0033,
         },
     },
     "Gadgets": {
         "Laptop": {
             "Costs": 250,
-            "Initial Price": 560,
-            "Shelf Life": 0,
+            "Initial_Price": 560,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.31,
         },
         "Smartphone": {
             "Costs": 170,
-            "Initial Price": 290,
-            "Shelf Life": 0,
+            "Initial_Price": 290,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.012,
         },
         "Witchtendo Switch": {
             "Costs": 190,
-            "Initial Price": 310,
-            "Shelf Life": 0,
+            "Initial_Price": 310,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.024,
         },
     },
     "Cafe Drinks": {
         "Americano": {
             "Costs": 10,
-            "Initial Price": 32,
-            "Shelf Life": 30,
+            "Initial_Price": 32,
+            "Shelf_Life": 30,
             "Product_Dimension": 0.005,
         },
         "Hot Chocolate": {
             "Costs": 13,
-            "Initial Price": 35,
-            "Shelf Life": 25,
+            "Initial_Price": 35,
+            "Shelf_Life": 25,
             "Product_Dimension": 0.005,
         },
         "Bubble Milk Tea": {
             "Costs": 16,
-            "Initial Price": 38,
-            "Shelf Life": 20,
+            "Initial_Price": 38,
+            "Shelf_Life": 20,
             "Product_Dimension": 0.005,
         },
     },
     "Automobiles": {
         "Sedan": {
             "Costs": 15000,
-            "Initial Price": 28000,
-            "Shelf Life": 0,
+            "Initial_Price": 28000,
+            "Shelf_Life": 0,
             "Product_Dimension": 18.5,
         },
         "SUV": {
             "Costs": 17000,
-            "Initial Price": 36000,
-            "Shelf Life": 0,
+            "Initial_Price": 36000,
+            "Shelf_Life": 0,
             "Product_Dimension": 23.2,
         },
         "Truck": {
             "Costs": 19000,
-            "Initial Price": 41000,
-            "Shelf Life": 0,
+            "Initial_Price": 41000,
+            "Shelf_Life": 0,
             "Product_Dimension": 28.2,
         },
     },
     "Medical Mask": {
         "Dust Mask": {
             "Costs": 18,
-            "Initial Price": 40,
-            "Shelf Life": 0,
+            "Initial_Price": 40,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.0133,
         },
         "Surgical Mask": {
             "Costs": 10,
-            "Initial Price": 20,
-            "Shelf Life": 0,
+            "Initial_Price": 20,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.0083,
         },
         "KN95": {
             "Costs": 19,
-            "Initial Price": 31,
-            "Shelf Life": 0,
+            "Initial_Price": 31,
+            "Shelf_Life": 0,
             "Product_Dimension": 0.012,
         },
     },
@@ -177,13 +177,6 @@ if rental_location and st.session_state.selected_category:
                 key=f"{rental_location}_rental_cost",
                 value=get_session_value(rental_location, "rental_cost", 0.00),
             )
-            overflow_fee = st.number_input(
-                "Overflow Fee (Day/m2)",
-                min_value=0.00,
-                format="%.2f",
-                key=f"{rental_location}_overflow_fee",
-                value=get_session_value(rental_location, "overflow_fee", 0.00),
-            )
 
             st.markdown("---")
 
@@ -206,7 +199,6 @@ if rental_location and st.session_state.selected_category:
                         "Product": edited_data,
                         "rental_size": rental_size,
                         "rental_cost": rental_cost,
-                        "overflow_fee": overflow_fee,
                     },
                 )
 
@@ -220,7 +212,7 @@ if rental_location and st.session_state.selected_category:
     )
 
     with tab1:
-        with st.expander("Capacity Planning"):
+        with st.expander("Optimal Stock"):
             with st.form("CheckPlanning"):
                 columns = st.columns(len(products))
                 planning_values = {}
@@ -259,60 +251,22 @@ if rental_location and st.session_state.selected_category:
     with tab2:
         with st.expander(label="Minimal Price Calculation"):
             with st.form("MinimalPriceCalculation"):
-                columns = st.columns(len(products))
-                sales_values = {}
-                for i, product in enumerate(products):
-                    with columns[i]:
-                        sales_values[product] = st.number_input(
-                            label=f"{product} - Sales",
-                            min_value=0,
-                            key=f"{product}_sales",
-                        )
 
+                minimal_price = {}
+                minimal_price["rental_size"] = st.number_input(
+                    label="Rental Size:",
+                    value=get_session_value(rental_location, "rental_size", 0.00),
+                    disabled=True,
+                )
+                minimal_price["rental_cost"] = st.number_input(
+                    label="Rental Cost:",
+                    value=get_session_value(rental_location, "rental_cost", 0.00),
+                    disabled=True,
+                )
                 if st.form_submit_button(
-                    label="Calculate: Average Minimum Price", type="primary"
+                    label="Calculate: Minimal Price", type="primary"
                 ):
-                    rental_size = get_session_value(
-                        rental_location, "rental_size", 0.00
-                    )
-                    rental_cost = get_session_value(
-                        rental_location, "rental_cost", 0.00
-                    )
-                    overflow_fee = get_session_value(
-                        rental_location, "overflow_fee", 0.00
-                    )
-
-                    total_rental_cost = rental_size * rental_cost
-                    total_product_volume = sum(
-                        st.session_state.store_location[rental_location]["Product"][
-                            product
-                        ]["Product_Dimension"]
-                        * sales_values[product]
-                        for product in products
-                    )
-
-                    overflow_cost = max(
-                        0, (total_product_volume - rental_size) * overflow_fee
-                    )
-
-                    total_product_cost = sum(
-                        st.session_state.store_location[rental_location]["Product"][
-                            product
-                        ]["Costs"]
-                        * sales_values[product]
-                        for product in products
-                    )
-
-                    total_cost = total_rental_cost + overflow_cost + total_product_cost
-                    total_sales = sum(sales_values.values())
-
-                    if total_sales > 0:
-                        minimal_price = total_cost / total_sales
-                        st.success(
-                            f"Minimal price per unit to cover all costs: {minimal_price:.2f}"
-                        )
-                    else:
-                        st.warning("Please enter sales values greater than zero.")
+                    minimal_price["rental_size"] * minimal_price["rental_cost"]
 
     with tab3:
         with st.expander(label="Sales Velocity"):
@@ -359,6 +313,8 @@ if rental_location and st.session_state.selected_category:
                         st.write("---")
                     else:
                         st.write(f"No data available for {product}")
+
+                sales_data
 else:
     st.error(body="Input Location & Category First")
 
