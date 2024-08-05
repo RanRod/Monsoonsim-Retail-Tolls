@@ -98,7 +98,7 @@ st.markdown(
 
 st.markdown(
     "<div style='text-align: center; padding: 10px; background-color: #2C2C2C; border-radius: 10px; margin-bottom: 20px;'>"
-    "<p style='margin: 0; font-size: 1.1rem;'>Developed by Muhammad Raihan | University of Al Azhar Indonesia</p>"
+    "<p style='margin: 0; font-size: 1.1rem;'>Created by Muhammad Raihan | University of Al Azhar Indonesia</p>"
     "<p style='margin: 10px 0;'>Connect with me: "
     "<a href='https://www.linkedin.com/in/muhammad-raihan-0ba3872ab' target='_blank'>LinkedIn</a> | "
     "<a href='https://www.instagram.com/muhandrai/' target='_blank'>Instagram</a>"
