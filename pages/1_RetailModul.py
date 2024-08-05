@@ -143,7 +143,7 @@ with st.sidebar:
             key="category_selector",
         )
 
-        if st.button(label="Apply Category", type="primary"):
+        if st.button(label="Apply Data", type="primary"):
             st.session_state.selected_category = category
             for location in locations:
                 update_session_state(
