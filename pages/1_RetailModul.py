@@ -324,7 +324,7 @@ if rental_location and st.session_state.selected_category:
                     )
 
     with tab5:
-        with st.expander(label="Sales Comparison"):
+        with st.expander(label="Marketing - Sales Comparison"):
             sales_data = {}
             for product in products:
                 st.markdown(body=f"***{product}***")
