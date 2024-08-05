@@ -222,14 +222,26 @@ if rental_location:
             with st.expander("Optimal Stock"):
                 with st.form("CheckPlanning"):
                     columns = st.columns(len(products))
+                    optimal_stock_options = [
+                        0,
+                        1000,
+                        3000,
+                        5000,
+                        8000,
+                        12000,
+                        20000,
+                        30000,
+                        40000,
+                        50000,
+                    ]
+
                     planning_values = {}
                     for i, product in enumerate(products):
                         with columns[i]:
-                            planning_values[product] = st.number_input(
-                                label=f"{product} - Stock",
-                                min_value=0,
-                                key=f"{product}_stock",
-                                step=1000,
+                            planning_values[product] = st.selectbox(
+                                label=f"{product} (Unit)",
+                                options=optimal_stock_options,
+                                key=f"{product}_optimalStock",
                             )
 
                     if st.form_submit_button(
@@ -254,6 +266,46 @@ if rental_location:
                                 st.success(f"Stock Percentage: {stock_percentage:.2f}%")
                             else:
                                 st.error(f"Stock Percentage: {stock_percentage:.2f}%")
+
+            with st.expander("Re-Stock Planning"):
+                with st.form("ReStockPlanning"):
+                    columns = st.columns(len(products))
+                    restock_values = {}
+                    for i, product in enumerate(products):
+                        with columns[i]:
+                            restock_values[product] = st.number_input(
+                                label=f"{product} - Restock",
+                                min_value=0,
+                                key=f"{product}_restock",
+                                step=1000,
+                            )
+
+                    if st.form_submit_button(
+                        label="Calculate: Re-Stock Planning", type="primary"
+                    ):
+                        rental_size = get_session_value(
+                            rental_location, "rental_size", 0.00
+                        )
+
+                        if rental_size > 0:
+                            restock_size = []
+                            for product in products:
+                                restock_size.append(
+                                    st.session_state.store_location[rental_location][
+                                        "product"
+                                    ][product]["Product_Dimension"]
+                                    * restock_values[product]
+                                )
+                            restock_percentage = sum(restock_size) / rental_size * 100
+
+                            if restock_percentage <= 100:
+                                st.success(
+                                    f"Restock Percentage: {restock_percentage:.2f}%"
+                                )
+                            else:
+                                st.error(
+                                    f"Restock Percentage: {restock_percentage:.2f}%"
+                                )
 
         with tab2:
             with st.expander(label="COGS | Sales (Per-Product)"):
