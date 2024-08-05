@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
 
 st.set_page_config(
     page_title="Retail Module Tools",
@@ -142,7 +143,7 @@ with st.sidebar:
             key="category_selector",
         )
 
-        if st.button("Apply Category"):
+        if st.button(label="Apply Category", type="primary"):
             st.session_state.selected_category = category
             for location in locations:
                 update_session_state(
@@ -202,9 +203,10 @@ if rental_location and st.session_state.selected_category:
                     },
                 )
 
-    tab1, tab2, tab3, tab4 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "Capacity Planning",
+            "COGS | Sales",
             "Price Strategy",
             "Sales Velocity",
             "Marketing Evaluation",
@@ -222,6 +224,7 @@ if rental_location and st.session_state.selected_category:
                             label=f"{product} - Stock",
                             min_value=0,
                             key=f"{product}_stock",
+                            step=1000,
                         )
 
                 if st.form_submit_button(
@@ -249,6 +252,43 @@ if rental_location and st.session_state.selected_category:
                         st.warning("Please apply the rental information first.")
 
     with tab2:
+        with st.expander(label="COGS | Sales"):
+            COGS_SALE = st.data_editor(
+                data=pd.DataFrame(
+                    {
+                        "Day": [],
+                        "Sales": [],
+                        "COGS(Accumulated)": [],
+                    }
+                ),
+                num_rows="dynamic",
+                use_container_width=True,
+            )
+
+            if st.button(label="Calculate", use_container_width=True, type="primary"):
+                COGS_SALE["COGS(Non-Accumulated)"] = COGS_SALE[
+                    "COGS(Accumulated)"
+                ].diff()
+                COGS_SALE.loc[0, "COGS(Non-Accumulated)"] = COGS_SALE.loc[
+                    0, "COGS(Accumulated)"
+                ]
+
+                COGS_SALE = COGS_SALE.fillna(value=0)
+
+                col1, col2 = st.columns(spec=2)
+                with col1:
+                    st.write(COGS_SALE)
+
+                with col2:
+                    fig = px.line(
+                        data_frame=COGS_SALE,
+                        x=COGS_SALE["Day"],
+                        y=["Sales", "COGS(Non-Accumulated)"],
+                        markers=True,
+                    )
+                    st.plotly_chart(fig)
+
+    with tab3:
         with st.expander(label="Minimal Price Calculation"):
             with st.form("MinimalPriceCalculation"):
 
@@ -268,7 +308,7 @@ if rental_location and st.session_state.selected_category:
                 ):
                     minimal_price["rental_size"] * minimal_price["rental_cost"]
 
-    with tab3:
+    with tab4:
         with st.expander(label="Sales Velocity"):
             df_sales = pd.DataFrame({"Day": []})
             for product in products:
@@ -283,7 +323,7 @@ if rental_location and st.session_state.selected_category:
                         f"Avg Sales - {product}: {round(sum(sales_editor[f'UnitSold - {product}']) / max(sales_editor['Day']), 2)} (units per-day)"
                     )
 
-    with tab4:
+    with tab5:
         with st.expander(label="Sales Comparison"):
             sales_data = {}
             for product in products:
@@ -314,7 +354,6 @@ if rental_location and st.session_state.selected_category:
                     else:
                         st.write(f"No data available for {product}")
 
-                sales_data
 else:
     st.error(body="Input Location & Category First")
 
