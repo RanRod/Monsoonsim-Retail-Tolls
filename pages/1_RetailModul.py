@@ -313,16 +313,23 @@ if rental_location:
 
         with tab2:
             with st.expander(label="COGS | Sales (Per-Product)"):
-                COGS_SALE = {"Day": []}
-                for product in products:
-                    COGS_SALE[f"{product}_Sales"] = []
-                    COGS_SALE[f"{product}_COGS(Acc.)"] = []
+                num_rows = 5
+                col1, col2 = st.columns(2)
+                with col1:
+                    SALES = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        SALES[f"{product}_Sales"] = np.zeros(num_rows)
 
+                with col2:
+                    COGS = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        COGS[f"{product}_COGS(Acc.)"] = np.zeros(num_rows)
+
+                COGS_SALE = {**SALES, **COGS}
+                COGS_SALE = pd.DataFrame(COGS_SALE)
                 COGS_SALE = st.data_editor(
                     data=COGS_SALE, num_rows="dynamic", use_container_width=True
                 )
-
-                COGS_SALE = pd.DataFrame(COGS_SALE)
 
                 if st.button(
                     label="Visualize", type="primary", use_container_width=True
@@ -332,7 +339,6 @@ if rental_location:
                             f"{product}_COGS(Acc.)"
                         ].diff()
 
-                        # Set the first row of Non-Acc. to be equal to Acc. since there's no previous row to subtract
                         COGS_SALE.loc[
                             COGS_SALE.index[0], f"{product}_COGS(Non-Acc.)"
                         ] = COGS_SALE.loc[COGS_SALE.index[0], f"{product}_COGS(Acc.)"]
@@ -402,24 +408,33 @@ if rental_location:
 
         with tab5:
             with st.expander(label="Marketing - Sales Comparison"):
-                sales_data = {
-                    "Day": [],
-                }
+                num_rows = 5
+                col1, col2 = st.columns(2)
+                with col1:
+                    SALES = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        SALES[f"{product}_Sales"] = np.zeros(num_rows)
 
-                for product in products:
-                    sales_data[f"{product}_UnitSold-Before"] = []
-                    sales_data[f"{product}_UnitSold-After"] = []
+                with col2:
+                    MARKETING = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        MARKETING[f"{product}_COGS(Acc.)"] = np.zeros(num_rows)
+
+                MARKETING_SALE = {**SALES, **MARKETING}
+                MARKETING_SALE = pd.DataFrame(MARKETING_SALE)
 
                 sales_data = st.data_editor(
-                    data=sales_data, num_rows="dynamic", use_container_width=True
+                    data=MARKETING_SALE,
+                    num_rows="dynamic",
+                    use_container_width=True,
+                    key="marketing_sales_editor",
                 )
-
-                sales_data = pd.DataFrame(sales_data)
 
                 if st.button(
                     label="Compare: Sales-Marketing",
                     type="primary",
                     use_container_width=True,
+                    key="compare_sales_marketing_button",
                 ):
                     before_sales = []
                     after_sales = []
@@ -450,71 +465,55 @@ if rental_location:
                             go.Bar(name="After", x=product_names, y=after_sales),
                         ]
                     )
-
-                    # Update layout
                     fig.update_layout(
                         title="Sales Comparison Before and After Marketing",
                         xaxis_title="Products",
                         yaxis_title="Units Sold",
                         barmode="group",
                     )
-
-                    # Display the chart
                     st.plotly_chart(fig, use_container_width=True)
 
-            with st.expander(label="COGS Comparison"):
-                sales_COGS = {"Day": []}
+        with st.expander(label="COGS Comparison"):
+            num_rows = 5
+            col1, col2 = st.columns(2)
 
-                for product in products:
-                    sales_COGS[f"{product}_Before_COGS(Acc.)"] = []
-                    sales_COGS[f"{product}_After_COGS(Acc.)"] = []
+            COGS_COMPARE = {"Day": np.arange(1, num_rows + 1)}
+            for product in products:
+                COGS_COMPARE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
+                COGS_COMPARE[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
 
-                sales_COGS = st.data_editor(
-                    data=sales_COGS, num_rows="dynamic", use_container_width=True
-                )
-                sales_COGS = pd.DataFrame(sales_COGS)
+            COGS_COMPARE = pd.DataFrame(COGS_COMPARE)
 
-                if st.button(
-                    label="Compare: COGS", type="primary", use_container_width=True
-                ):
-                    if not sales_COGS.empty:
-                        for product in products:
-                            sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = sales_COGS[
-                                f"{product}_Before_COGS(Acc.)"
-                            ].diff()
-                            sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = sales_COGS[
-                                f"{product}_After_COGS(Acc.)"
-                            ].diff()
+            sales_COGS = st.data_editor(
+                data=COGS_COMPARE, num_rows="dynamic", use_container_width=True
+            )
+            sales_COGS = pd.DataFrame(sales_COGS)
 
-                            # Set the first row values
-                            if not sales_COGS.empty:
-                                sales_COGS.loc[
-                                    sales_COGS.index[0],
-                                    f"{product}_Before_COGS(Non-Acc.)",
-                                ] = sales_COGS.loc[
-                                    sales_COGS.index[0], f"{product}_Before_COGS(Acc.)"
-                                ]
-                                sales_COGS.loc[
-                                    sales_COGS.index[0],
-                                    f"{product}_After_COGS(Non-Acc.)",
-                                ] = sales_COGS.loc[
-                                    sales_COGS.index[0], f"{product}_After_COGS(Acc.)"
-                                ]
-
-                        fig = px.line(
-                            data_frame=sales_COGS,
-                            x="Day",
-                            y=[
-                                f"{product}_Before_COGS(Non-Acc.)"
-                                for product in products
-                            ]
-                            + [
-                                f"{product}_After_COGS(Non-Acc.)"
-                                for product in products
-                            ],
-                            markers=True,
+            if st.button(
+                label="Compare: COGS", type="primary", use_container_width=True
+            ):
+                if not sales_COGS.empty:
+                    for product in products:
+                        sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = (
+                            sales_COGS[f"{product}_Before_COGS(Acc.)"]
+                            .diff()
+                            .fillna(sales_COGS[f"{product}_Before_COGS(Acc.)"])
                         )
-                        st.plotly_chart(figure_or_data=fig, use_container_width=True)
+
+                        sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = (
+                            sales_COGS[f"{product}_After_COGS(Acc.)"]
+                            .diff()
+                            .fillna(sales_COGS[f"{product}_After_COGS(Acc.)"])
+                        )
+
+                    fig = px.line(
+                        data_frame=sales_COGS,
+                        x="Day",
+                        y=[f"{product}_Before_COGS(Non-Acc.)" for product in products]
+                        + [f"{product}_After_COGS(Non-Acc.)" for product in products],
+                        markers=True,
+                    )
+                    st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
 else:
     st.error(body="Input Location & Category First")
