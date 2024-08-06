@@ -144,13 +144,13 @@ with st.sidebar:
             key="category_selector",
         )
 
-        if st.button(label="Apply Data", type="primary"):
+        if st.button(label="Apply Data", type="primary", use_container_width=True):
             for location in locations:
                 update_session_state(
                     location,
                     {"product": product_data[category].copy(), "status": False},
                 )
-            st.success(f"Applied {category} to all locations")
+            st.success(f"Configuration applied successfully!")
 
 with st.sidebar:
     st.markdown(body="---")
@@ -166,14 +166,14 @@ if rental_location:
     with st.expander(f"{rental_location} - Retail Information", expanded=True):
         with st.form("LocationRental"):
             rental_size = st.number_input(
-                "Rental Size (m2)",
+                "Rental Size",
                 min_value=0.00,
                 format="%.2f",
                 key=f"{rental_location}_rental_size",
                 value=get_session_value(rental_location, "rental_size", 0.00),
             )
             rental_cost = st.number_input(
-                "Rental Cost (Day/m2)",
+                "Rental Cost",
                 min_value=0.00,
                 format="%.2f",
                 key=f"{rental_location}_rental_cost",
@@ -245,7 +245,9 @@ if rental_location:
                             )
 
                     if st.form_submit_button(
-                        label="Calculate: Optimal Stock", type="primary"
+                        label="Calculate: Optimal Stock",
+                        type="primary",
+                        use_container_width=True,
                     ):
                         rental_size = get_session_value(
                             rental_location, "rental_size", 0.00
@@ -281,7 +283,9 @@ if rental_location:
                             )
 
                     if st.form_submit_button(
-                        label="Calculate: Re-Stock Planning", type="primary"
+                        label="Calculate: Re-Stock Planning",
+                        type="primary",
+                        use_container_width=True,
                     ):
                         rental_size = get_session_value(
                             rental_location, "rental_size", 0.00
@@ -358,7 +362,9 @@ if rental_location:
                         disabled=True,
                     )
                     if st.form_submit_button(
-                        label="Calculate: Minimal Price", type="primary"
+                        label="Calculate: Minimal Price",
+                        type="primary",
+                        use_container_width=True,
                     ):
                         minimal_price["rental_size"] * minimal_price["rental_cost"]
 
@@ -371,11 +377,28 @@ if rental_location:
                     data=df_sales, use_container_width=True, num_rows="dynamic"
                 )
 
-                if st.button(label="Calculate: Sales Velocity", type="primary"):
+                if st.button(
+                    label="Calculate: Sales Velocity",
+                    type="primary",
+                    use_container_width=True,
+                ):
                     for product in products:
-                        st.info(
-                            f"Avg Sales - {product}: {round(sum(sales_editor[f'UnitSold - {product}']) / max(sales_editor['Day']), 2)} (units per-day)"
+                        avg_sales = round(
+                            sum(sales_editor[f"UnitSold - {product}"])
+                            / max(sales_editor["Day"]),
+                            2,
                         )
+                        st.info(f"Avg Sales - {product}: {avg_sales} (units per-day)")
+
+                        # Calculate projections for 3, 5, 7, 14, and 30 days
+                        projection_days = [3, 5, 7, 14, 30]
+                        for days in projection_days:
+                            projected_sales = round(avg_sales * days, 2)
+                            st.markdown(
+                                f"Projected Sales - {product} in {days} days: {projected_sales} units"
+                            )
+
+                        st.markdown("---")
 
         with tab5:
             with st.expander(label="Marketing - Sales Comparison"):
@@ -393,7 +416,11 @@ if rental_location:
 
                 sales_data = pd.DataFrame(sales_data)
 
-                if st.button(label="Compare", type="primary", use_container_width=True):
+                if st.button(
+                    label="Compare: Sales-Marketing",
+                    type="primary",
+                    use_container_width=True,
+                ):
                     before_sales = []
                     after_sales = []
                     product_names = []
@@ -434,6 +461,60 @@ if rental_location:
 
                     # Display the chart
                     st.plotly_chart(fig, use_container_width=True)
+
+            with st.expander(label="COGS Comparison"):
+                sales_COGS = {"Day": []}
+
+                for product in products:
+                    sales_COGS[f"{product}_Before_COGS(Acc.)"] = []
+                    sales_COGS[f"{product}_After_COGS(Acc.)"] = []
+
+                sales_COGS = st.data_editor(
+                    data=sales_COGS, num_rows="dynamic", use_container_width=True
+                )
+                sales_COGS = pd.DataFrame(sales_COGS)
+
+                if st.button(
+                    label="Compare: COGS", type="primary", use_container_width=True
+                ):
+                    if not sales_COGS.empty:
+                        for product in products:
+                            sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = sales_COGS[
+                                f"{product}_Before_COGS(Acc.)"
+                            ].diff()
+                            sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = sales_COGS[
+                                f"{product}_After_COGS(Acc.)"
+                            ].diff()
+
+                            # Set the first row values
+                            if not sales_COGS.empty:
+                                sales_COGS.loc[
+                                    sales_COGS.index[0],
+                                    f"{product}_Before_COGS(Non-Acc.)",
+                                ] = sales_COGS.loc[
+                                    sales_COGS.index[0], f"{product}_Before_COGS(Acc.)"
+                                ]
+                                sales_COGS.loc[
+                                    sales_COGS.index[0],
+                                    f"{product}_After_COGS(Non-Acc.)",
+                                ] = sales_COGS.loc[
+                                    sales_COGS.index[0], f"{product}_After_COGS(Acc.)"
+                                ]
+
+                        fig = px.line(
+                            data_frame=sales_COGS,
+                            x="Day",
+                            y=[
+                                f"{product}_Before_COGS(Non-Acc.)"
+                                for product in products
+                            ]
+                            + [
+                                f"{product}_After_COGS(Non-Acc.)"
+                                for product in products
+                            ],
+                            markers=True,
+                        )
+                        st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
 else:
     st.error(body="Input Location & Category First")
