@@ -396,7 +396,6 @@ if rental_location:
                         )
                         st.info(f"Avg Sales - {product}: {avg_sales} (units per-day)")
 
-                        # Calculate projections for 3, 5, 7, 14, and 30 days
                         projection_days = [3, 5, 7, 14, 30]
                         for days in projection_days:
                             projected_sales = round(avg_sales * days, 2)
@@ -466,58 +465,6 @@ if rental_location:
 
                     # Display the chart
                     st.plotly_chart(fig, use_container_width=True)
-
-            with st.expander(label="COGS Comparison"):
-                num_rows = 5
-                col1, col2 = st.columns(2)
-                with col1:
-                    COGS_BEFORE = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        COGS_BEFORE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
-                with col2:
-                    COGS_AFTER = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        COGS_AFTER[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
-
-                COGS_COMPARE = {**COGS_BEFORE, **COGS_AFTER}
-                COGS_COMPARE = pd.DataFrame(COGS_COMPARE)
-
-                sales_COGS = st.data_editor(
-                    data=COGS_COMPARE, num_rows="dynamic", use_container_width=True
-                )
-                sales_COGS = pd.DataFrame(sales_COGS)
-
-                if st.button(
-                    label="Compare: COGS", type="primary", use_container_width=True
-                ):
-                    if not sales_COGS.empty:
-                        for product in products:
-                            sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = (
-                                sales_COGS[f"{product}_Before_COGS(Acc.)"]
-                                .diff()
-                                .fillna(sales_COGS[f"{product}_Before_COGS(Acc.)"])
-                            )
-
-                            sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = (
-                                sales_COGS[f"{product}_After_COGS(Acc.)"]
-                                .diff()
-                                .fillna(sales_COGS[f"{product}_After_COGS(Acc.)"])
-                            )
-
-                        fig = px.line(
-                            data_frame=sales_COGS,
-                            x="Day",
-                            y=[
-                                f"{product}_Before_COGS(Non-Acc.)"
-                                for product in products
-                            ]
-                            + [
-                                f"{product}_After_COGS(Non-Acc.)"
-                                for product in products
-                            ],
-                            markers=True,
-                        )
-                        st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
 else:
     st.error(body="Input Location & Category First")
