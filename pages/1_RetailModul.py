@@ -463,47 +463,53 @@ if rental_location:
                     # Display the chart
                     st.plotly_chart(fig, use_container_width=True)
 
-        with st.expander(label="COGS Comparison"):
-            num_rows = 5
-            col1, col2 = st.columns(2)
+            with st.expander(label="COGS Comparison"):
+                num_rows = 5
+                col1, col2 = st.columns(2)
 
-            COGS_COMPARE = {"Day": np.arange(1, num_rows + 1)}
-            for product in products:
-                COGS_COMPARE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
-                COGS_COMPARE[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
+                COGS_COMPARE = {"Day": np.arange(1, num_rows + 1)}
+                for product in products:
+                    COGS_COMPARE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
+                    COGS_COMPARE[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
 
-            COGS_COMPARE = pd.DataFrame(COGS_COMPARE)
+                COGS_COMPARE = pd.DataFrame(COGS_COMPARE)
 
-            sales_COGS = st.data_editor(
-                data=COGS_COMPARE, num_rows="dynamic", use_container_width=True
-            )
-            sales_COGS = pd.DataFrame(sales_COGS)
+                sales_COGS = st.data_editor(
+                    data=COGS_COMPARE, num_rows="dynamic", use_container_width=True
+                )
+                sales_COGS = pd.DataFrame(sales_COGS)
 
-            if st.button(
-                label="Compare: COGS", type="primary", use_container_width=True
-            ):
-                if not sales_COGS.empty:
-                    for product in products:
-                        sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = (
-                            sales_COGS[f"{product}_Before_COGS(Acc.)"]
-                            .diff()
-                            .fillna(sales_COGS[f"{product}_Before_COGS(Acc.)"])
+                if st.button(
+                    label="Compare: COGS", type="primary", use_container_width=True
+                ):
+                    if not sales_COGS.empty:
+                        for product in products:
+                            sales_COGS[f"{product}_Before_COGS(Non-Acc.)"] = (
+                                sales_COGS[f"{product}_Before_COGS(Acc.)"]
+                                .diff()
+                                .fillna(sales_COGS[f"{product}_Before_COGS(Acc.)"])
+                            )
+
+                            sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = (
+                                sales_COGS[f"{product}_After_COGS(Acc.)"]
+                                .diff()
+                                .fillna(sales_COGS[f"{product}_After_COGS(Acc.)"])
+                            )
+
+                        fig = px.line(
+                            data_frame=sales_COGS,
+                            x="Day",
+                            y=[
+                                f"{product}_Before_COGS(Non-Acc.)"
+                                for product in products
+                            ]
+                            + [
+                                f"{product}_After_COGS(Non-Acc.)"
+                                for product in products
+                            ],
+                            markers=True,
                         )
-
-                        sales_COGS[f"{product}_After_COGS(Non-Acc.)"] = (
-                            sales_COGS[f"{product}_After_COGS(Acc.)"]
-                            .diff()
-                            .fillna(sales_COGS[f"{product}_After_COGS(Acc.)"])
-                        )
-
-                    fig = px.line(
-                        data_frame=sales_COGS,
-                        x="Day",
-                        y=[f"{product}_Before_COGS(Non-Acc.)" for product in products]
-                        + [f"{product}_After_COGS(Non-Acc.)" for product in products],
-                        markers=True,
-                    )
-                    st.plotly_chart(figure_or_data=fig, use_container_width=True)
+                        st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
 else:
     st.error(body="Input Location & Category First")
