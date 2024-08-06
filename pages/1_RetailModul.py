@@ -409,32 +409,22 @@ if rental_location:
         with tab5:
             with st.expander(label="Marketing - Sales Comparison"):
                 num_rows = 5
-                col1, col2 = st.columns(2)
-                with col1:
-                    SALES = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        SALES[f"{product}_Sales"] = np.zeros(num_rows)
+                SALES_DATA = {"Day": np.arange(1, num_rows + 1)}
 
-                with col2:
-                    MARKETING = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        MARKETING[f"{product}_COGS(Acc.)"] = np.zeros(num_rows)
+                for product in products:
+                    SALES_DATA[f"{product}_UnitSold-Before"] = [0] * num_rows
+                    SALES_DATA[f"{product}_UnitSold-After"] = [0] * num_rows
 
-                MARKETING_SALE = {**SALES, **MARKETING}
-                MARKETING_SALE = pd.DataFrame(MARKETING_SALE)
+                SALES_DATA = pd.DataFrame(SALES_DATA)
 
-                sales_data = st.data_editor(
-                    data=MARKETING_SALE,
-                    num_rows="dynamic",
-                    use_container_width=True,
-                    key="marketing_sales_editor",
+                SALES_DATA = st.data_editor(
+                    data=SALES_DATA, num_rows="dynamic", use_container_width=True
                 )
 
                 if st.button(
                     label="Compare: Sales-Marketing",
                     type="primary",
                     use_container_width=True,
-                    key="compare_sales_marketing_button",
                 ):
                     before_sales = []
                     after_sales = []
@@ -445,15 +435,11 @@ if rental_location:
                         after_column = f"{product}_UnitSold-After"
 
                         if (
-                            before_column in sales_data.columns
-                            and after_column in sales_data.columns
+                            before_column in SALES_DATA.columns
+                            and after_column in SALES_DATA.columns
                         ):
-                            before = sales_data[before_column].sum()
-                            after = sales_data[after_column].sum()
-                            change = after - before
-                            percent_change = (
-                                (change / before) * 100 if before != 0 else 0
-                            )
+                            before = SALES_DATA[before_column].sum()
+                            after = SALES_DATA[after_column].sum()
 
                             before_sales.append(before)
                             after_sales.append(after)
@@ -465,12 +451,16 @@ if rental_location:
                             go.Bar(name="After", x=product_names, y=after_sales),
                         ]
                     )
+
+                    # Update layout
                     fig.update_layout(
                         title="Sales Comparison Before and After Marketing",
                         xaxis_title="Products",
                         yaxis_title="Units Sold",
                         barmode="group",
                     )
+
+                    # Display the chart
                     st.plotly_chart(fig, use_container_width=True)
 
         with st.expander(label="COGS Comparison"):
