@@ -407,16 +407,20 @@ if rental_location:
                         st.markdown("---")
 
         with tab5:
-            with st.expander(label="Marketing - Sales Comparison"):
+            with st.expander(label="Sales Comparison"):
                 num_rows = 5
-                SALES_DATA = {"Day": np.arange(1, num_rows + 1)}
+                col1, col2 = st.columns(2)
+                with col1:
+                    SALES_BEFORE = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        SALES_BEFORE[f"{product}_UnitSold-Before"] = np.zeros(num_rows)
+                with col2:
+                    SALES_AFTER = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        SALES_AFTER[f"{product}_UnitSold-After"] = np.zeros(num_rows)
 
-                for product in products:
-                    SALES_DATA[f"{product}_UnitSold-Before"] = [0] * num_rows
-                    SALES_DATA[f"{product}_UnitSold-After"] = [0] * num_rows
-
+                SALES_DATA = {**SALES_BEFORE, **SALES_AFTER}
                 SALES_DATA = pd.DataFrame(SALES_DATA)
-
                 SALES_DATA = st.data_editor(
                     data=SALES_DATA, num_rows="dynamic", use_container_width=True
                 )
@@ -466,12 +470,16 @@ if rental_location:
             with st.expander(label="COGS Comparison"):
                 num_rows = 5
                 col1, col2 = st.columns(2)
+                with col1:
+                    COGS_BEFORE = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        COGS_BEFORE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
+                with col2:
+                    COGS_AFTER = {"Day": np.arange(1, num_rows + 1)}
+                    for product in products:
+                        COGS_AFTER[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
 
-                COGS_COMPARE = {"Day": np.arange(1, num_rows + 1)}
-                for product in products:
-                    COGS_COMPARE[f"{product}_Before_COGS(Acc.)"] = np.zeros(num_rows)
-                    COGS_COMPARE[f"{product}_After_COGS(Acc.)"] = np.zeros(num_rows)
-
+                COGS_COMPARE = {**COGS_BEFORE, **COGS_AFTER}
                 COGS_COMPARE = pd.DataFrame(COGS_COMPARE)
 
                 sales_COGS = st.data_editor(
