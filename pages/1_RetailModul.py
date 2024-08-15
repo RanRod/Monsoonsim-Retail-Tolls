@@ -312,45 +312,46 @@ if rental_location:
                                 )
 
         with tab2:
-            with st.expander(label="COGS | Sales (Per-Product)"):
-                num_rows = 5
-                col1, col2 = st.columns(2)
-                with col1:
-                    SALES = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        SALES[f"{product}_Sales"] = np.zeros(num_rows)
+            pass
+            # with st.expander(label="COGS | Sales (Per-Product)"):
+            #     num_rows = 5
+            #     col1, col2 = st.columns(2)
+            #     with col1:
+            #         SALES = {"Day": np.arange(1, num_rows + 1)}
+            #         for product in products:
+            #             SALES[f"{product}_Sales"] = np.zeros(num_rows)
 
-                with col2:
-                    COGS = {"Day": np.arange(1, num_rows + 1)}
-                    for product in products:
-                        COGS[f"{product}_COGS(Acc.)"] = np.zeros(num_rows)
+            #     with col2:
+            #         COGS = {"Day": np.arange(1, num_rows + 1)}
+            #         for product in products:
+            #             COGS[f"{product}_COGS(Acc.)"] = np.zeros(num_rows)
 
-                COGS_SALE = {**SALES, **COGS}
-                COGS_SALE = pd.DataFrame(COGS_SALE)
-                COGS_SALE = st.data_editor(
-                    data=COGS_SALE, num_rows="dynamic", use_container_width=True
-                )
+            #     COGS_SALE = {**SALES, **COGS}
+            #     COGS_SALE = pd.DataFrame(COGS_SALE)
+            #     COGS_SALE = st.data_editor(
+            #         data=COGS_SALE, num_rows="dynamic", use_container_width=True
+            #     )
 
-                if st.button(
-                    label="Visualize", type="primary", use_container_width=True
-                ):
-                    for product in products:
-                        COGS_SALE[f"{product}_COGS(Non-Acc.)"] = COGS_SALE[
-                            f"{product}_COGS(Acc.)"
-                        ].diff()
+            #     if st.button(
+            #         label="Visualize", type="primary", use_container_width=True
+            #     ):
+            #         for product in products:
+            #             COGS_SALE[f"{product}_COGS(Non-Acc.)"] = COGS_SALE[
+            #                 f"{product}_COGS(Acc.)"
+            #             ].diff()
 
-                        COGS_SALE.loc[
-                            COGS_SALE.index[0], f"{product}_COGS(Non-Acc.)"
-                        ] = COGS_SALE.loc[COGS_SALE.index[0], f"{product}_COGS(Acc.)"]
+            #             COGS_SALE.loc[
+            #                 COGS_SALE.index[0], f"{product}_COGS(Non-Acc.)"
+            #             ] = COGS_SALE.loc[COGS_SALE.index[0], f"{product}_COGS(Acc.)"]
 
-                    fig = px.line(
-                        data_frame=COGS_SALE,
-                        x="Day",
-                        y=[f"{product}_Sales" for product in products]
-                        + [f"{product}_COGS(Non-Acc.)" for product in products],
-                        markers=True,
-                    )
-                    st.plotly_chart(figure_or_data=fig, use_container_width=True)
+            #         fig = px.line(
+            #             data_frame=COGS_SALE,
+            #             x="Day",
+            #             y=[f"{product}_Sales" for product in products]
+            #             + [f"{product}_COGS(Non-Acc.)" for product in products],
+            #             markers=True,
+            #         )
+            #         st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
         with tab3:
             with st.expander(label="Minimal Price Calculation"):
