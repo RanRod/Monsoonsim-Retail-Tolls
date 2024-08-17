@@ -354,26 +354,27 @@ if rental_location:
             #         st.plotly_chart(figure_or_data=fig, use_container_width=True)
 
         with tab3:
-            with st.expander(label="Minimal Price Calculation"):
-                with st.form("MinimalPriceCalculation"):
+            pass
+            # with st.expander(label="Minimal Price Calculation"):
+            #     with st.form("MinimalPriceCalculation"):
 
-                    minimal_price = {}
-                    minimal_price["rental_size"] = st.number_input(
-                        label="Rental Size:",
-                        value=get_session_value(rental_location, "rental_size", 0.00),
-                        disabled=True,
-                    )
-                    minimal_price["rental_cost"] = st.number_input(
-                        label="Rental Cost:",
-                        value=get_session_value(rental_location, "rental_cost", 0.00),
-                        disabled=True,
-                    )
-                    if st.form_submit_button(
-                        label="Calculate: Minimal Price",
-                        type="primary",
-                        use_container_width=True,
-                    ):
-                        minimal_price["rental_size"] * minimal_price["rental_cost"]
+            #         minimal_price = {}
+            #         minimal_price["rental_size"] = st.number_input(
+            #             label="Rental Size:",
+            #             value=get_session_value(rental_location, "rental_size", 0.00),
+            #             disabled=True,
+            #         )
+            #         minimal_price["rental_cost"] = st.number_input(
+            #             label="Rental Cost:",
+            #             value=get_session_value(rental_location, "rental_cost", 0.00),
+            #             disabled=True,
+            #         )
+            #         if st.form_submit_button(
+            #             label="Calculate: Minimal Price",
+            #             type="primary",
+            #             use_container_width=True,
+            #         ):
+            #             minimal_price["rental_size"] * minimal_price["rental_cost"]
 
         with tab4:
             with st.expander(label="Sales Velocity"):
